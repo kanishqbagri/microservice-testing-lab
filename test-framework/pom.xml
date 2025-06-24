@@ -1,0 +1,11 @@
+<project>
+  <groupId>com.kb</groupId>
+  <artifactId>test-framework</artifactId>
+  <packaging>pom</packaging>
+  <modules>
+    <module>api-tests/user-service-api-tests</module>
+    <module>contract-tests/user-service-consumer</module>
+    <module>contract-tests/user-service-provider</module>
+    <!-- more test types -->
+  </modules>
+</project>

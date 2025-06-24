@@ -1,0 +1,21 @@
+<project>
+  <parent>
+    <groupId>com.kb</groupId>
+    <artifactId>test-framework</artifactId>
+    <version>1.0.0</version>
+  </parent>
+  <artifactId>user-service-consumer</artifactId>
+
+  <dependencies>
+    <dependency>
+      <groupId>au.com.dius.pact.consumer</groupId>
+      <artifactId>junit5</artifactId>
+      <version>4.5.9</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+    </dependency>
+  </dependencies>
+</project>
