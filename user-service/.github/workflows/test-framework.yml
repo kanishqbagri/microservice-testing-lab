@@ -1,0 +1,53 @@
+name: Test Framework CI
+
+on:
+  push:
+    paths:
+      - 'test-framework/**'
+  pull_request:
+    paths:
+      - 'test-framework/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: users-db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Start services (user-service)
+        run: docker-compose up -d user-service
+        working-directory: ./  # assuming docker-compose.yml is in root
+
+      - name: Wait for user-service to be ready
+        run: |
+          echo "Waiting for user-service on port 8081..."
+          until curl -s http://localhost:8081/actuator/health | grep UP; do sleep 5; done
+
+      - name: Run API Tests
+        run: mvn -f test-framework/api-tests/user-service-api-tests test
+
+      - name: Run Contract Tests
+        run: mvn -f test-framework/contract-tests/user-service-consumer test
