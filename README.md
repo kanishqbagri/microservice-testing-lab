@@ -106,3 +106,7 @@ This lab aims to showcase how to layer tests across a microservice system:
 ./mvnw clean package -DskipTests
 docker compose up --build
 
+# Tests
+## Unit Tests
+## Api Tests
+## Contract Test for user-service
