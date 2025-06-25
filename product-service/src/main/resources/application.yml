@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/users-db
-    username: user
-    password: pass
+    url: jdbc:postgresql://localhost:5432/products-db
+    username: product_user
+    password: product_pass
   jpa:
     hibernate:
       ddl-auto: update
@@ -15,7 +15,7 @@ spring:
     activate:
       on-profile: docker
   datasource:
-    url: jdbc:postgresql://postgres:5432/users-db
-    username: user
-    password: pass
+    url: jdbc:postgresql://postgres:5432/products-db
+    username: products_user
+    password: products_pass
 
