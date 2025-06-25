@@ -1,9 +1,8 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15
-    container_name: postgres
+  postgres-user:
+    image: postgres:14
     environment:
       POSTGRES_DB: users-db
       POSTGRES_USER: user
@@ -11,36 +10,39 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - postgres-user-data:/var/lib/postgresql/data
 
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
+  postgres-product:
+    image: postgres:14
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      POSTGRES_DB: products-db
+      POSTGRES_USER: product_user
+      POSTGRES_PASSWORD: product_pass
     ports:
-      - "5672:5672"     # For backend communication
-      - "15672:15672"   # Management UI: http://localhost:15672
+      - "5433:5432"
+    volumes:
+      - postgres-product-data:/var/lib/postgresql/data
 
   user-service:
-    build:
-      context: ./user-service
-      dockerfile: Dockerfile
-    container_name: user-service
-    ports:
-      - "8081:8081"
+    build: ./user-service
     depends_on:
-      - postgres
-      - rabbitmq
+      - postgres-user
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/users-db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user:5432/users-db
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: pass
-      JWT_SECRET: myjwtsecretkey
-      JWT_EXPIRATION_MS: 3600000
+
+  product-service:
+    build: ./product-service
+    depends_on:
+      - postgres-product
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-product:5432/products-db
+      SPRING_DATASOURCE_USERNAME: product_user
+      SPRING_DATASOURCE_PASSWORD: product_pass
 
 volumes:
-  pgdata:
-
+  postgres-user-data:
+  postgres-product-data:
