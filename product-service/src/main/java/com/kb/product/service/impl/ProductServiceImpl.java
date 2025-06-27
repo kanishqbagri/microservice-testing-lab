@@ -11,10 +11,12 @@ public class ProductServiceImpl implements ProductService {
     private final Map<Long, Product> productStore = new HashMap<>();
     private Long idCounter = 1L;
 
+    @Override
     public Long getId() {
         return id;
     }
 
+    @Override
     public void setId(Long id) {
         this.id = id;
     }
