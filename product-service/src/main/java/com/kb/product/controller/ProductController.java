@@ -1,7 +1,7 @@
 package com.kb.product.controller;
 
-import com.example.product.model.Product;
-import com.example.product.service.ProductService;
+import com.kb.product.model.Product;
+import com.kb.product.service.ProductService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
