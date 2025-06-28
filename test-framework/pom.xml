@@ -1,6 +1,8 @@
 <project>
+  <modelVersion>4.0.0</modelVersion>
   <groupId>com.kb</groupId>
   <artifactId>test-framework</artifactId>
+  <version>1.0.0</version>
   <packaging>pom</packaging>
   <modules>
     <module>api-tests/user-service-api-tests</module>

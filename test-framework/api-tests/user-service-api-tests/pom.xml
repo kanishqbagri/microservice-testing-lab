@@ -1,8 +1,10 @@
 <project>
+  <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.kb</groupId>
     <artifactId>test-framework</artifactId>
     <version>1.0.0</version>
+    <relativePath>../../pom.xml</relativePath>
   </parent>
 
   <artifactId>user-service-api-tests</artifactId>

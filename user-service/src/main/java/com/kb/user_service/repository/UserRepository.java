@@ -1,6 +1,6 @@
-package com.kb.user_service.repositoryrepository;
+package com.kb.user_service.repository;
 
-import com.example.userservice.entity.User;
+import com.kb.user_service.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

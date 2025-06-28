@@ -38,4 +38,4 @@ public class UserServiceTest {
         var response = userService.registerUser(request);
         assertEquals("test@example.com", response.getEmail());
     }
-}
+} 

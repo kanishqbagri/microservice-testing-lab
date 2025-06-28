@@ -1,6 +1,7 @@
-package com.kb.product.service;
+package com.kb.product.service.impl;
 
 import com.kb.product.model.Product;
+import com.kb.product.service.ProductService;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -11,16 +12,7 @@ public class ProductServiceImpl implements ProductService {
     private final Map<Long, Product> productStore = new HashMap<>();
     private Long idCounter = 1L;
 
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(Long id) {
-        this.id = id;
-    }
-    @Override
+@Override
     public Product createProduct(Product product) {
         product.setId(idCounter++);
         productStore.put(product.getId(), product);

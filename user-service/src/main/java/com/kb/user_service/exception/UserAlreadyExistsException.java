@@ -1,4 +1,4 @@
-package com.kb.user_service.exception.userservice.exception;
+package com.kb.user_service.exception;
 
 public class UserAlreadyExistsException extends RuntimeException {
     public UserAlreadyExistsException(String msg) {
