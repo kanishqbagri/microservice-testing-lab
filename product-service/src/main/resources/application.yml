@@ -15,7 +15,7 @@ spring:
     activate:
       on-profile: docker
   datasource:
-    url: jdbc:postgresql://postgres:5432/products-db
-    username: products_user
-    password: products_pass
+    url: jdbc:postgresql://postgres-product:5432/products-db
+    username: product_user
+    password: product_pass
 

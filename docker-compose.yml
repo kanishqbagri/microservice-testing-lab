@@ -23,26 +23,94 @@ services:
     volumes:
       - postgres-product-data:/var/lib/postgresql/data
 
+  postgres-order:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: orders-db
+      POSTGRES_USER: order_user
+      POSTGRES_PASSWORD: order_pass
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-order-data:/var/lib/postgresql/data
+
+  postgres-notification:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: notifications-db
+      POSTGRES_USER: notification_user
+      POSTGRES_PASSWORD: notification_pass
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-notification-data:/var/lib/postgresql/data
+
+  gateway-service:
+    build: ./gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - user-service
+      - product-service
+      - order-service
+      - notification-service
+
   user-service:
     build: ./user-service
+    ports:
+      - "8081:8081"
     depends_on:
       - postgres-user
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8081
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user:5432/users-db
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: pass
 
   product-service:
     build: ./product-service
+    ports:
+      - "8082:8082"
     depends_on:
       - postgres-product
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8082
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-product:5432/products-db
       SPRING_DATASOURCE_USERNAME: product_user
       SPRING_DATASOURCE_PASSWORD: product_pass
 
+  order-service:
+    build: ./order-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - postgres-order
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8083
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-order:5432/orders-db
+      SPRING_DATASOURCE_USERNAME: order_user
+      SPRING_DATASOURCE_PASSWORD: order_pass
+
+  notification-service:
+    build: ./notification-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      - postgres-notification
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8084
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-notification:5432/notifications-db
+      SPRING_DATASOURCE_USERNAME: notification_user
+      SPRING_DATASOURCE_PASSWORD: notification_pass
+
 volumes:
   postgres-user-data:
   postgres-product-data:
+  postgres-order-data:
+  postgres-notification-data:

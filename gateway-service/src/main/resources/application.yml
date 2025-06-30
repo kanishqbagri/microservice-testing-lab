@@ -1,12 +1,63 @@
+server:
+  port: 8080
+
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/users-db
-    username: user
-    password: pass
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=0
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/api/products/**
+          filters:
+            - StripPrefix=0
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - StripPrefix=0
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - StripPrefix=0
+      default-filters:
+        - name: RequestLoggingFilter
+        - name: CircuitBreaker
+          args:
+            name: defaultCircuitBreaker
+            fallbackUri: forward:/fallback
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.kb.gateway_service: DEBUG
 
 ---
 

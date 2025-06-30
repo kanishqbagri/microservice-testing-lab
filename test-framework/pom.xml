@@ -1,5 +1,11 @@
 <project>
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.5.3</version>
+    <relativePath/>
+  </parent>
   <groupId>com.kb</groupId>
   <artifactId>test-framework</artifactId>
   <version>1.0.0</version>
