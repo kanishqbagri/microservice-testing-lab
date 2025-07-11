@@ -1,0 +1,38 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: contract-test-generator
+  
+  # Freemarker configuration
+  freemarker:
+    template-loader-path: classpath:/templates/
+    suffix: .ftl
+    charset: UTF-8
+    check-template-location: true
+    cache: false
+
+# Logging configuration
+logging:
+  level:
+    com.kb.contractgenerator: DEBUG
+    org.springframework.web: INFO
+    freemarker: WARN
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# Actuator configuration
+info:
+  app:
+    name: Contract Test Generator
+    version: 1.0.0
+    description: Automated contract test generator from Swagger/OpenAPI specifications 
