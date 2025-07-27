@@ -10,4 +10,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleEmailExists(UserAlreadyExistsException ex) {
         return ResponseEntity.badRequest().body(ex.getMessage());
     }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<String> handleInvalidCredentials(InvalidCredentialsException ex) {
+        return ResponseEntity.status(401).body(ex.getMessage());
+    }
 }

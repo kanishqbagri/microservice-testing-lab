@@ -1,5 +1,7 @@
 package com.kb.user_service.controller;
 
+import com.kb.user_service.dto.LoginRequest;
+import com.kb.user_service.dto.LoginResponse;
 import com.kb.user_service.dto.UserRegistrationRequest;
 import com.kb.user_service.dto.UserResponse;
 import com.kb.user_service.service.UserService;
@@ -18,5 +20,10 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRegistrationRequest request) {
         return ResponseEntity.ok(userService.registerUser(request));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+        return ResponseEntity.ok(userService.login(request));
     }
 }

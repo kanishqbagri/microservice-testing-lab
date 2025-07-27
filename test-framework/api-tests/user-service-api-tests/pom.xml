@@ -20,6 +20,26 @@
       <artifactId>junit-jupiter</artifactId>
       <version>5.10.0</version>
     </dependency>
+    <!-- Spring AI (check for latest version and correct artifact) -->
+    <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+        <version>0.8.1</version>
+    </dependency>
+
+    <!-- OpenAI Java -->
+    <dependency>
+        <groupId>com.theokanning.openai-gpt3-java</groupId>
+        <artifactId>service</artifactId>
+        <version>0.18.2</version>
+    </dependency>
+
+    <!-- Weka -->
+    <dependency>
+        <groupId>nz.ac.waikato.cms.weka</groupId>
+        <artifactId>weka-stable</artifactId>
+        <version>3.8.6</version>
+    </dependency>
   </dependencies>
   <build>
     <plugins>

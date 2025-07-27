@@ -196,8 +196,12 @@ public class SwaggerParserService {
         
         if (schema.getProperties() != null) {
             Map<String, SwaggerSpec.Schema> properties = new HashMap<>();
-            for (Map.Entry<String, Schema> entry : schema.getProperties().entrySet()) {
-                properties.put(entry.getKey(), convertSchema(entry.getValue()));
+            for (Object entry : schema.getProperties().entrySet()) {
+                @SuppressWarnings("unchecked")
+                Map.Entry<String, Object> mapEntry = (Map.Entry<String, Object>) entry;
+                if (mapEntry.getValue() instanceof Schema) {
+                    properties.put(mapEntry.getKey(), convertSchema((Schema) mapEntry.getValue()));
+                }
             }
             convertedSchema.setProperties(properties);
         }
@@ -222,8 +226,12 @@ public class SwaggerParserService {
         
         if (components.getSchemas() != null) {
             Map<String, SwaggerSpec.Schema> schemas = new HashMap<>();
-            for (Map.Entry<String, Schema> entry : components.getSchemas().entrySet()) {
-                schemas.put(entry.getKey(), convertSchema(entry.getValue()));
+            for (Object entry : components.getSchemas().entrySet()) {
+                @SuppressWarnings("unchecked")
+                Map.Entry<String, Object> mapEntry = (Map.Entry<String, Object>) entry;
+                if (mapEntry.getValue() instanceof Schema) {
+                    schemas.put(mapEntry.getKey(), convertSchema((Schema) mapEntry.getValue()));
+                }
             }
             convertedComponents.setSchemas(schemas);
         }
