@@ -1,7 +1,8 @@
 package com.kb.jarvis.core.model;
 
-import lombok.Builder;
 import lombok.Data;
+import lombok.Builder;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Data
@@ -12,5 +13,8 @@ public class DecisionAction {
     private TestParameters parameters;
     private String estimatedTime;
     private Priority priority;
+    private ExecutionStrategy executionStrategy;
+    private double confidence;
+    private LocalDateTime timestamp;
     private Map<String, Object> metadata;
 } 

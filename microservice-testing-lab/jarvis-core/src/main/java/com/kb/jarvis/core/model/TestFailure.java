@@ -15,4 +15,8 @@ public class TestFailure {
     private LocalDateTime failureTime;
     private FailureType type;
     private double severity;
+    private FailureType failureType;
+    private String message;
+    private String serviceName;
+    private LocalDateTime timestamp;
 } 

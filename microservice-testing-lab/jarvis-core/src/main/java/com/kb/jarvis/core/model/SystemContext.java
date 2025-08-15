@@ -13,4 +13,7 @@ public class SystemContext {
     private List<SystemEvent> recentEvents;
     private Map<String, Object> environment;
     private LocalDateTime lastUpdated;
+    private UserIntent lastIntent;
+    private LocalDateTime lastUpdate;
+    private int activeEvents;
 } 

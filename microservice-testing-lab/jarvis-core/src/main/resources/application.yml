@@ -1,0 +1,221 @@
+server:
+  port: 8085
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: jarvis-test-framework
+  
+  # Database configuration (for future use)
+  datasource:
+    url: jdbc:postgresql://localhost:5436/jarvis-db
+    username: jarvis
+    password: jarvis_pass
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  
+  # Flyway migration
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  
+  # AI Configuration
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:your-openai-api-key-here}
+      base-url: https://api.openai.com/v1
+      chat:
+        options:
+          model: gpt-3.5-turbo
+          temperature: 0.7
+          max-tokens: 1000
+
+# Jarvis AI Configuration
+jarvis:
+  # NLP Engine Configuration
+  nlp:
+    confidence-threshold: 0.7
+    max-patterns: 100
+    enable-advanced-parsing: true
+  
+  # AI Engine Configuration
+  ai:
+    confidence-threshold: 0.7
+    max-patterns: 100
+    enable-spring-ai: true
+    enable-pattern-recognition: true
+    enable-risk-assessment: true
+    enable-performance-prediction: true
+  
+  # Decision Engine Configuration
+  decision:
+    confidence-threshold: 0.6
+    max-parallel-actions: 5
+    enable-priority-management: true
+    enable-resource-allocation: true
+  
+  # Context Manager Configuration
+  context:
+    update-interval: 30000  # 30 seconds
+    service-timeout: 5000   # 5 seconds
+    max-retries: 3
+    enable-health-monitoring: true
+    enable-performance-monitoring: true
+  
+  # Memory Manager Configuration
+  memory:
+    max-entries: 10000
+    retention-hours: 168  # 7 days
+    cleanup-interval: 3600000  # 1 hour
+    enable-pattern-storage: true
+    enable-learning-data: true
+  
+  # Learning Engine Configuration
+  learning:
+    min-data-points: 10
+    confidence-threshold: 0.7
+    analysis-interval: 300000  # 5 minutes
+    enable-pattern-discovery: true
+    enable-trend-analysis: true
+    enable-optimization-learning: true
+
+# Logging Configuration
+logging:
+  level:
+    com.kb.jarvis: DEBUG
+    org.springframework.ai: INFO
+    org.springframework.web: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Actuator configuration
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: always
+  health:
+    defaults:
+      enabled: true
+
+# Profiles
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    show-sql: true
+  ai:
+    openai:
+      chat:
+        options:
+          temperature: 0.9
+
+jarvis:
+  nlp:
+    confidence-threshold: 0.6
+  ai:
+    confidence-threshold: 0.6
+  decision:
+    confidence-threshold: 0.5
+
+logging:
+  level:
+    com.kb.jarvis: DEBUG
+    org.springframework.ai: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  h2:
+    console:
+      enabled: true
+
+jarvis:
+  nlp:
+    confidence-threshold: 0.5
+  ai:
+    confidence-threshold: 0.5
+  decision:
+    confidence-threshold: 0.4
+  context:
+    update-interval: 10000
+  learning:
+    analysis-interval: 60000
+
+logging:
+  level:
+    com.kb.jarvis: INFO
+    org.springframework.ai: WARN
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    show-sql: false
+  ai:
+    openai:
+      chat:
+        options:
+          temperature: 0.5
+
+jarvis:
+  nlp:
+    confidence-threshold: 0.8
+  ai:
+    confidence-threshold: 0.8
+  decision:
+    confidence-threshold: 0.7
+  context:
+    update-interval: 60000
+  learning:
+    analysis-interval: 600000
+
+logging:
+  level:
+    com.kb.jarvis: INFO
+    org.springframework.ai: WARN
+    root: WARN

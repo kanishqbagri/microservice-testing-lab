@@ -14,4 +14,7 @@ public class ActiveTest {
     private LocalDateTime startTime;
     private long duration;
     private double progress;
+    private String id;
+    private TestType type;
+    private String serviceName;
 } 

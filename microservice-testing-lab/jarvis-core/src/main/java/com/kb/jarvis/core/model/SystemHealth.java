@@ -13,4 +13,6 @@ public class SystemHealth {
     private Map<String, ServiceHealth> serviceHealth;
     private List<String> issues;
     private LocalDateTime lastCheck;
+    private HealthStatus status;
+    private LocalDateTime timestamp;
 } 

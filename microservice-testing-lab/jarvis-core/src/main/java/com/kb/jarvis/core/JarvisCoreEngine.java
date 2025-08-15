@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.Map;
 
 @Component
 public class JarvisCoreEngine {
@@ -118,7 +119,7 @@ public class JarvisCoreEngine {
         return ExecutionResult.builder()
             .success(true)
             .message("Test suite executed successfully")
-            .data("testResults", "Sample test results")
+            .data(Map.of("testResults", "Sample test results"))
             .build();
     }
 
@@ -130,7 +131,7 @@ public class JarvisCoreEngine {
         return ExecutionResult.builder()
             .success(true)
             .message("Failure analysis completed")
-            .data("analysis", "Root cause analysis results")
+            .data(Map.of("analysis", "Root cause analysis results"))
             .build();
     }
 
@@ -142,7 +143,7 @@ public class JarvisCoreEngine {
         return ExecutionResult.builder()
             .success(true)
             .message("New tests generated successfully")
-            .data("generatedTests", "Generated test cases")
+            .data(Map.of("generatedTests", "Generated test cases"))
             .build();
     }
 
@@ -154,7 +155,7 @@ public class JarvisCoreEngine {
         return ExecutionResult.builder()
             .success(true)
             .message("Test suite optimized")
-            .data("optimizations", "Applied optimizations")
+            .data(Map.of("optimizations", "Applied optimizations"))
             .build();
     }
 
@@ -166,7 +167,7 @@ public class JarvisCoreEngine {
         return ExecutionResult.builder()
             .success(true)
             .message("System health check completed")
-            .data("healthStatus", "System health metrics")
+            .data(Map.of("healthStatus", "System health metrics"))
             .build();
     }
 
