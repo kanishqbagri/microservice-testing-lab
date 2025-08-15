@@ -7,6 +7,7 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -24,6 +25,7 @@ public class ContractTestGeneratorService {
     private SwaggerParserService swaggerParserService;
 
     @Autowired
+    @Qualifier("customFreemarkerConfig")
     private Configuration freemarkerConfig;
 
     public ContractTestResponse generateContractTests(ContractTestRequest request) {

@@ -3,15 +3,12 @@ package com.kb.contractgenerator.config;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateExceptionHandler;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Component;
 
-@Component
+@org.springframework.context.annotation.Configuration
 public class FreemarkerConfig {
 
-    @Bean
-    @Primary
-    public Configuration freemarkerConfig() {
+    @Bean("customFreemarkerConfig")
+    public Configuration customFreemarkerConfig() {
         Configuration cfg = new Configuration(Configuration.VERSION_2_3_32);
         
         // Set template loader to classpath
