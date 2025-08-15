@@ -3,8 +3,8 @@ package com.kb.gateway_service.service.impl;
 import com.kb.gateway_service.dto.GatewayStatusResponse;
 import com.kb.gateway_service.dto.ServiceHealthResponse;
 import com.kb.gateway_service.service.GatewayService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.stereotype.Service;
 
@@ -13,11 +13,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class GatewayServiceImpl implements GatewayService {
 
+    private static final Logger log = LoggerFactory.getLogger(GatewayServiceImpl.class);
     private final DiscoveryClient discoveryClient;
+
+    public GatewayServiceImpl(DiscoveryClient discoveryClient) {
+        this.discoveryClient = discoveryClient;
+    }
 
     @Override
     public GatewayStatusResponse getGatewayStatus() {

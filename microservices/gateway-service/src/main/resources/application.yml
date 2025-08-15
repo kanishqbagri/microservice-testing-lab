@@ -5,6 +5,8 @@ spring:
   application:
     name: gateway-service
   cloud:
+    compatibility-verifier:
+      enabled: false
     gateway:
       routes:
         - id: user-service
@@ -31,12 +33,7 @@ spring:
             - Path=/api/notifications/**
           filters:
             - StripPrefix=0
-      default-filters:
-        - name: RequestLoggingFilter
-        - name: CircuitBreaker
-          args:
-            name: defaultCircuitBreaker
-            fallbackUri: forward:/fallback
+
 
 management:
   endpoints:
