@@ -71,6 +71,13 @@ public class UserIntent {
         return timestamp;
     }
 
+    public String getServiceName() {
+        if (parameters != null && parameters.containsKey("serviceName")) {
+            return (String) parameters.get("serviceName");
+        }
+        return "unknown";
+    }
+
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }

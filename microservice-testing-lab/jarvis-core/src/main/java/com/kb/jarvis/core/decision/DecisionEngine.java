@@ -73,12 +73,22 @@ public class DecisionEngine {
             // Step 8: Generate action description
             String description = generateActionDescription(intent, actionType, analysis);
             
+            // Convert parameters to TestParameters
+            TestParameters testParameters = TestParameters.builder()
+                .serviceName(intent.getServiceName())
+                .testType(actionType.name())
+                .endpoints(new ArrayList<>())
+                .configuration(parameters)
+                .scope(TestScope.FULL)
+                .strategy(strategy)
+                .build();
+            
             DecisionAction action = DecisionAction.builder()
                 .type(actionType)
                 .description(description)
                 .priority(priority)
                 .executionStrategy(strategy)
-                .parameters(parameters)
+                .parameters(testParameters)
                 .estimatedTime(estimatedTime)
                 .confidence(analysis.getConfidence())
                 .timestamp(LocalDateTime.now())
@@ -106,9 +116,9 @@ public class DecisionEngine {
                 return ActionType.OPTIMIZE_TESTS;
             case HEALTH_CHECK:
                 return ActionType.HEALTH_CHECK;
-            case MONITOR_SYSTEM:
+            case GET_STATUS:
                 return ActionType.MONITOR_SYSTEM;
-            case GENERATE_REPORT:
+            case HELP:
                 return ActionType.GENERATE_REPORT;
             default:
                 return ActionType.UNKNOWN;
@@ -430,7 +440,7 @@ public class DecisionEngine {
             .priority(Priority.LOW)
             .confidence(0.1)
             .timestamp(LocalDateTime.now())
-            .build();
+                .build();
     }
     
     private static void initializeActionTemplates() {

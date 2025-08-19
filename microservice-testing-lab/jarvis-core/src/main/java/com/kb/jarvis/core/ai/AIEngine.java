@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 
 @Component
 public class AIEngine {
@@ -38,7 +37,7 @@ public class AIEngine {
     private int maxPatterns;
     
     // Pattern cache for performance
-    private final Map<String, Pattern> patternCache = new ConcurrentHashMap<>();
+    private final Map<String, java.util.regex.Pattern> patternCache = new ConcurrentHashMap<>();
     
     // Risk patterns and their weights
     private static final Map<String, Double> RISK_PATTERNS = new HashMap<>();
@@ -292,7 +291,7 @@ public class AIEngine {
             recommendations.add(Recommendation.builder()
                 .type(RecommendationType.RISK_MITIGATION)
                 .description("Run tests in isolated environment first")
-                .priority(Priority.HIGH)
+                .priority(0.9)
                 .build());
         }
         
@@ -301,7 +300,7 @@ public class AIEngine {
             recommendations.add(Recommendation.builder()
                 .type(RecommendationType.PERFORMANCE_OPTIMIZATION)
                 .description("Consider parallel test execution")
-                .priority(Priority.MEDIUM)
+                .priority(0.5)
                 .build());
         }
         
@@ -311,7 +310,7 @@ public class AIEngine {
             recommendations.add(Recommendation.builder()
                 .type(RecommendationType.TEST_OPTIMIZATION)
                 .description("Consider running smoke tests first")
-                .priority(Priority.MEDIUM)
+                .priority(0.5)
                 .build());
         }
         
