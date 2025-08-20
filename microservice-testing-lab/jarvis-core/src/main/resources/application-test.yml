@@ -1,0 +1,91 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: jarvis-test-framework
+  
+  # Disable database for quick testing
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+  
+  # Disable Flyway
+  flyway:
+    enabled: false
+  
+  # Disable AI for now
+  ai:
+    openai:
+      api-key: test-key
+      base-url: http://localhost:8080
+      chat:
+        options:
+          model: gpt-3.5-turbo
+          temperature: 0.7
+          max-tokens: 1000
+
+# Jarvis AI Configuration - Simplified
+jarvis:
+  nlp:
+    confidence-threshold: 0.5
+    enable-advanced-parsing: false
+  
+  ai:
+    confidence-threshold: 0.5
+    enable-spring-ai: false
+    enable-pattern-recognition: false
+    enable-risk-assessment: false
+    enable-performance-prediction: false
+  
+  decision:
+    confidence-threshold: 0.4
+    max-parallel-actions: 1
+    enable-priority-management: false
+    enable-resource-allocation: false
+  
+  context:
+    update-interval: 60000
+    service-timeout: 10000
+    max-retries: 1
+    enable-health-monitoring: false
+    enable-performance-monitoring: false
+  
+  memory:
+    max-entries: 100
+    retention-hours: 24
+    cleanup-interval: 3600000
+    enable-pattern-storage: false
+    enable-learning-data: false
+  
+  learning:
+    min-data-points: 1
+    confidence-threshold: 0.5
+    analysis-interval: 300000
+    enable-pattern-discovery: false
+    enable-trend-analysis: false
+    enable-optimization-learning: false
+
+# Logging Configuration
+logging:
+  level:
+    com.kb.jarvis: INFO
+    org.springframework.ai: WARN
+    org.springframework.web: INFO
+    root: WARN
+  pattern:
+    console: "%d{HH:mm:ss} %-5level %logger{36} - %msg%n"
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+  health:
+    defaults:
+      enabled: true
