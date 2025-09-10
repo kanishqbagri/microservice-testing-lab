@@ -156,14 +156,22 @@ public class NLPEngine {
         
         for (String pattern : servicePatterns) {
             if (input.contains(pattern)) {
-                services.add(normalizeServiceName(pattern));
+                String normalizedService = normalizeServiceName(pattern);
+                if (!services.contains(normalizedService)) {
+                    services.add(normalizedService);
+                }
             }
         }
         
-        // Check for synonyms
-        for (Map.Entry<String, String> synonym : ENTITY_SYNONYMS.entrySet()) {
-            if (input.contains(synonym.getKey())) {
-                services.add(synonym.getValue());
+        // Check for synonyms only if no exact service name was found
+        if (services.isEmpty()) {
+            for (Map.Entry<String, String> synonym : ENTITY_SYNONYMS.entrySet()) {
+                if (input.contains(synonym.getKey())) {
+                    String normalizedService = synonym.getValue();
+                    if (!services.contains(normalizedService)) {
+                        services.add(normalizedService);
+                    }
+                }
             }
         }
         
