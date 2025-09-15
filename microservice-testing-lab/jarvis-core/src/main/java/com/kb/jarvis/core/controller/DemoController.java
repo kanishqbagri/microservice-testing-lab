@@ -1,356 +1,288 @@
 package com.kb.jarvis.core.controller;
 
-import com.kb.jarvis.core.model.TestResult;
-import com.kb.jarvis.core.model.TestStatus;
-import com.kb.jarvis.core.model.TestType;
-import com.kb.jarvis.core.model.RiskLevel;
-import com.kb.jarvis.core.service.TestResultService;
-import com.kb.jarvis.core.service.TestDataInitializationService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
-// @RestController
-// @RequestMapping("/api/demo")
+@RestController
+@RequestMapping("/api/demo")
+@CrossOrigin(origins = "*")
 public class DemoController {
 
-    @Autowired
-    private TestResultService testResultService;
+    // Mock test data for demo purposes
+    private final List<Map<String, Object>> mockTestResults = createMockTestData();
 
-    @Autowired
-    private TestDataInitializationService testDataService;
-
-    @GetMapping("/overview")
-    public ResponseEntity<Map<String, Object>> getDemoOverview() {
-        Map<String, Object> overview = new HashMap<>();
-        
-        // Basic statistics from database
-        overview.put("totalTests", testResultService.getTotalCount());
-        overview.put("passedTests", testResultService.getPassedCount());
-        overview.put("failedTests", testResultService.getFailedCount());
-        overview.put("successRate", calculateSuccessRate());
-        
-        // Services covered from database
-        overview.put("services", testDataService.getServiceNames());
-        overview.put("testTypes", testDataService.getTestTypes());
-        
-        // Demo scenarios
-        overview.put("demoScenarios", Arrays.asList(
-            "Service Health Monitoring",
-            "Test Execution Analysis", 
-            "Security Test Results",
-            "Performance Analysis",
-            "Failure Pattern Recognition",
-            "Cross-Service Integration"
-        ));
-        
-        overview.put("timestamp", LocalDateTime.now());
-        overview.put("status", "READY");
-        
-        return ResponseEntity.ok(overview);
-    }
-
-    @GetMapping("/service/{serviceName}")
-    public ResponseEntity<Map<String, Object>> getServiceHealth(@PathVariable String serviceName) {
-        Map<String, Object> health = new HashMap<>();
-        health.put("serviceName", serviceName);
-        health.put("status", "HEALTHY");
-        health.put("lastChecked", LocalDateTime.now());
-        
-        // Get real test results from database
-        List<TestResult> recentTests = testResultService.findByServiceName(serviceName);
-        health.put("recentTests", recentTests.stream().limit(10).map(this::convertToMap).toList());
-        
-        // Get service statistics from database
-        Map<String, Object> stats = testResultService.getServiceStatistics(serviceName);
-        health.putAll(stats);
-        
-        return ResponseEntity.ok(health);
-    }
-
-    @GetMapping("/services/{serviceName}/tests")
-    public ResponseEntity<Map<String, Object>> getServiceTests(@PathVariable String serviceName) {
+    @GetMapping("/contract-tests/{serviceName}")
+    public ResponseEntity<Map<String, Object>> runContractTests(@PathVariable String serviceName) {
         Map<String, Object> response = new HashMap<>();
         
-        // Get test statistics for the service from database
-        response.put("serviceName", serviceName);
-        Map<String, Object> stats = testResultService.getServiceStatistics(serviceName);
-        response.putAll(stats);
+        // Simulate contract test execution
+        List<Map<String, Object>> contractTests = getContractTestsForService(serviceName);
         
-        // Get test types for this service
-        List<TestType> testTypes = testResultService.findByServiceName(serviceName).stream()
-            .map(TestResult::getTestType)
-            .distinct()
-            .collect(Collectors.toList());
-        response.put("testTypes", testTypes);
-        
-        // Get recent test results
-        List<TestResult> recentTests = testResultService.findByServiceName(serviceName).stream()
-            .sorted((a, b) -> b.getStartTime().compareTo(a.getStartTime()))
-            .limit(5)
-            .collect(Collectors.toList());
-        response.put("recentTests", recentTests.stream().map(this::convertToMap).toList());
-        
-        // Get performance metrics
-        response.put("performanceMetrics", getServicePerformanceMetrics(serviceName));
-        
-        // Get security test results
-        List<TestResult> securityTests = testResultService.findByServiceNameAndTestType(serviceName, TestType.SECURITY_TEST);
-        response.put("securityTests", securityTests.stream().map(this::convertToMap).toList());
-        
-        response.put("timestamp", LocalDateTime.now());
+        response.put("service", serviceName);
+        response.put("testType", "CONTRACT_TEST");
+        response.put("totalTests", contractTests.size());
+        response.put("passedTests", contractTests.stream().mapToInt(t -> (Boolean) t.get("passed") ? 1 : 0).sum());
+        response.put("failedTests", contractTests.stream().mapToInt(t -> (Boolean) t.get("passed") ? 0 : 1).sum());
+        response.put("executionTime", "2.3s");
+        response.put("timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        response.put("tests", contractTests);
         
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/test-types/{testType}/analysis")
-    public ResponseEntity<Map<String, Object>> getTestTypeAnalysis(@PathVariable String testType) {
+    @GetMapping("/integration-tests/{serviceName}")
+    public ResponseEntity<Map<String, Object>> runIntegrationTests(@PathVariable String serviceName) {
         Map<String, Object> response = new HashMap<>();
         
-        TestType type = TestType.valueOf(testType);
-        response.put("testType", testType);
+        // Simulate integration test execution with more realistic timing
+        List<Map<String, Object>> integrationTests = getIntegrationTestsForService(serviceName);
         
-        // Get test type statistics from database
-        Map<String, Object> stats = testResultService.getTestTypeStatistics(type);
-        response.putAll(stats);
-        
-        // Get services using this test type
-        List<String> services = testResultService.findByTestType(type).stream()
-            .map(TestResult::getServiceName)
-            .distinct()
-            .collect(Collectors.toList());
-        response.put("services", services);
-        
-        // Get common failure patterns
-        List<TestResult> failedTests = testResultService.findByStatus(TestStatus.FAILED).stream()
-            .filter(t -> t.getTestType() == type)
-            .collect(Collectors.toList());
-        response.put("failedTests", failedTests.stream().map(this::convertToMap).toList());
-        
-        response.put("timestamp", LocalDateTime.now());
+        response.put("service", serviceName);
+        response.put("testType", "INTEGRATION_TEST");
+        response.put("totalTests", integrationTests.size());
+        response.put("passedTests", integrationTests.stream().mapToInt(t -> (Boolean) t.get("passed") ? 1 : 0).sum());
+        response.put("failedTests", integrationTests.stream().mapToInt(t -> (Boolean) t.get("passed") ? 0 : 1).sum());
+        response.put("executionTime", calculateIntegrationTestTime(integrationTests));
+        response.put("timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        response.put("tests", integrationTests);
+        response.put("environment", "test");
+        response.put("database", "H2");
+        response.put("message", "Integration tests completed successfully");
         
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/security/analysis")
-    public ResponseEntity<Map<String, Object>> getSecurityAnalysis() {
+    @GetMapping("/contract-tests/failure-analysis")
+    public ResponseEntity<Map<String, Object>> getContractTestFailureAnalysis() {
         Map<String, Object> response = new HashMap<>();
         
-        // Get all security tests
-        List<TestResult> securityTests = testResultService.findByTestType(TestType.SECURITY_TEST);
-        response.put("totalSecurityTests", securityTests.size());
+        // Find the most recent contract test failure
+        Optional<Map<String, Object>> lastFailure = mockTestResults.stream()
+            .filter(test -> "CONTRACT_TEST".equals(test.get("testType")))
+            .filter(test -> "FAILED".equals(test.get("status")))
+            .max(Comparator.comparing(test -> (LocalDateTime) test.get("timestamp")));
         
-        // Get passed security tests
-        List<TestResult> passedSecurityTests = securityTests.stream()
-            .filter(t -> t.getStatus() == TestStatus.PASSED)
-            .collect(Collectors.toList());
-        response.put("passedSecurityTests", passedSecurityTests.size());
-        
-        // Get failed security tests
-        List<TestResult> failedSecurityTests = securityTests.stream()
-            .filter(t -> t.getStatus() == TestStatus.FAILED)
-            .collect(Collectors.toList());
-        response.put("failedSecurityTests", failedSecurityTests.size());
-        
-        // Calculate security score
-        double securityScore = securityTests.size() > 0 ? 
-            (double) passedSecurityTests.size() / securityTests.size() * 100 : 0;
-        response.put("securityScore", securityScore);
-        
-        // Get security test details
-        response.put("securityTestDetails", securityTests.stream().map(this::convertToMap).toList());
-        
-        // Get risk level distribution
-        Map<RiskLevel, Long> riskDistribution = securityTests.stream()
-            .filter(t -> t.getRiskLevel() != null)
-            .collect(Collectors.groupingBy(TestResult::getRiskLevel, Collectors.counting()));
-        response.put("riskDistribution", riskDistribution);
-        
-        response.put("timestamp", LocalDateTime.now());
-        
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/performance/analysis")
-    public ResponseEntity<Map<String, Object>> getPerformanceAnalysis() {
-        Map<String, Object> response = new HashMap<>();
-        
-        // Get all performance tests
-        List<TestResult> performanceTests = testResultService.findByTestType(TestType.PERFORMANCE_TEST);
-        response.put("totalPerformanceTests", performanceTests.size());
-        
-        // Get performance test details
-        response.put("performanceTestDetails", performanceTests.stream().map(this::convertToMap).toList());
-        
-        // Calculate average performance metrics
-        double avgResponseTime = performanceTests.stream()
-            .filter(t -> t.getExecutionTimeMs() != null)
-            .mapToLong(TestResult::getExecutionTimeMs)
-            .average()
-            .orElse(0.0);
-        response.put("averageResponseTime", avgResponseTime);
-        
-        // Get slow tests
-        List<TestResult> slowTests = testResultService.findSlowTests(1000L); // Tests taking more than 1 second
-        response.put("slowTests", slowTests.stream().map(this::convertToMap).toList());
-        
-        // Get performance anomalies
-        List<String> services = testDataService.getServiceNames();
-        Map<String, List<TestResult>> anomalies = new HashMap<>();
-        for (String service : services) {
-            List<TestResult> serviceAnomalies = testResultService.findPerformanceAnomalies(service);
-            if (!serviceAnomalies.isEmpty()) {
-                anomalies.put(service, serviceAnomalies);
-            }
-        }
-        response.put("performanceAnomalies", anomalies);
-        
-        response.put("timestamp", LocalDateTime.now());
-        
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/failures/analysis")
-    public ResponseEntity<Map<String, Object>> getFailureAnalysis() {
-        Map<String, Object> response = new HashMap<>();
-        
-        // Get all failed tests
-        List<TestResult> failedTests = testResultService.findByStatus(TestStatus.FAILED);
-        response.put("totalFailedTests", failedTests.size());
-        
-        // Get failed tests by service
-        Map<String, Long> failuresByService = failedTests.stream()
-            .collect(Collectors.groupingBy(TestResult::getServiceName, Collectors.counting()));
-        response.put("failuresByService", failuresByService);
-        
-        // Get failed tests by test type
-        Map<TestType, Long> failuresByType = failedTests.stream()
-            .collect(Collectors.groupingBy(TestResult::getTestType, Collectors.counting()));
-        response.put("failuresByType", failuresByType);
-        
-        // Get recent failures
-        List<TestResult> recentFailures = failedTests.stream()
-            .sorted((a, b) -> b.getStartTime().compareTo(a.getStartTime()))
-            .limit(10)
-            .collect(Collectors.toList());
-        response.put("recentFailures", recentFailures.stream().map(this::convertToMap).toList());
-        
-        // Get tests with errors
-        List<TestResult> testsWithErrors = testResultService.findTestsWithErrors();
-        response.put("testsWithErrors", testsWithErrors.stream().map(this::convertToMap).toList());
-        
-        response.put("timestamp", LocalDateTime.now());
-        
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/integration/analysis")
-    public ResponseEntity<Map<String, Object>> getIntegrationAnalysis() {
-        Map<String, Object> response = new HashMap<>();
-        
-        // Get all integration tests
-        List<TestResult> integrationTests = testResultService.findByTestType(TestType.INTEGRATION_TEST);
-        response.put("totalIntegrationTests", integrationTests.size());
-        
-        // Get integration test details
-        response.put("integrationTestDetails", integrationTests.stream().map(this::convertToMap).toList());
-        
-        // Get integration tests by service
-        Map<String, List<TestResult>> integrationByService = integrationTests.stream()
-            .collect(Collectors.groupingBy(TestResult::getServiceName));
-        response.put("integrationByService", integrationByService);
-        
-        // Calculate integration success rate
-        long passedIntegrationTests = integrationTests.stream()
-            .filter(t -> t.getStatus() == TestStatus.PASSED)
-            .count();
-        double integrationSuccessRate = integrationTests.size() > 0 ? 
-            (double) passedIntegrationTests / integrationTests.size() * 100 : 0;
-        response.put("integrationSuccessRate", integrationSuccessRate);
-        
-        // Get cross-service integration tests
-        List<TestResult> crossServiceTests = integrationTests.stream()
-            .filter(t -> t.getTestName().toLowerCase().contains("cross") || 
-                        t.getTestName().toLowerCase().contains("end-to-end") ||
-                        t.getTestName().toLowerCase().contains("flow"))
-            .collect(Collectors.toList());
-        response.put("crossServiceTests", crossServiceTests.stream().map(this::convertToMap).toList());
-        
-        response.put("timestamp", LocalDateTime.now());
-        
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/reload-data")
-    public ResponseEntity<Map<String, Object>> reloadTestData() {
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            testDataService.reloadTestData();
-            response.put("status", "SUCCESS");
-            response.put("message", "Test data reloaded successfully");
-            response.put("totalTests", testResultService.getTotalCount());
-        } catch (Exception e) {
-            response.put("status", "ERROR");
-            response.put("message", "Failed to reload test data: " + e.getMessage());
+        if (lastFailure.isPresent()) {
+            Map<String, Object> failure = lastFailure.get();
+            response.put("lastFailureFound", true);
+            response.put("service", failure.get("serviceName"));
+            response.put("testName", failure.get("testName"));
+            response.put("failureTime", failure.get("timestamp"));
+            response.put("errorMessage", failure.get("errorMessage"));
+            response.put("daysSinceFailure", calculateDaysSince((LocalDateTime) failure.get("timestamp")));
+        } else {
+            response.put("lastFailureFound", false);
+            response.put("message", "No contract test failures found in recent history");
         }
         
-        response.put("timestamp", LocalDateTime.now());
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/coverage-analysis")
+    public ResponseEntity<Map<String, Object>> getCoverageAnalysis() {
+        Map<String, Object> response = new HashMap<>();
+        
+        // Calculate test coverage by service
+        Map<String, Map<String, Integer>> serviceCoverage = new HashMap<>();
+        
+        for (Map<String, Object> test : mockTestResults) {
+            String serviceName = (String) test.get("serviceName");
+            String testType = (String) test.get("testType");
+            
+            serviceCoverage.computeIfAbsent(serviceName, k -> new HashMap<>())
+                .merge(testType, 1, Integer::sum);
+        }
+        
+        // Find service with most total tests
+        String serviceWithMostTests = serviceCoverage.entrySet().stream()
+            .max(Comparator.comparing(entry -> 
+                entry.getValue().values().stream().mapToInt(Integer::intValue).sum()))
+            .map(Map.Entry::getKey)
+            .orElse("No services found");
+        
+        response.put("serviceCoverage", serviceCoverage);
+        response.put("serviceWithMostTests", serviceWithMostTests);
+        response.put("totalServices", serviceCoverage.size());
+        response.put("analysisTimestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         
         return ResponseEntity.ok(response);
     }
 
-    // Helper methods
-    private double calculateSuccessRate() {
-        long total = testResultService.getTotalCount();
-        long passed = testResultService.getPassedCount();
-        return total > 0 ? (double) passed / total * 100 : 0;
+    @GetMapping("/services")
+    public ResponseEntity<List<String>> getAvailableServices() {
+        List<String> services = Arrays.asList("user-service", "product-service", "order-service", "notification-service", "gateway-service");
+        return ResponseEntity.ok(services);
     }
 
-    private Map<String, Object> getServicePerformanceMetrics(String serviceName) {
-        List<TestResult> serviceTests = testResultService.findByServiceName(serviceName);
+    @GetMapping("/test-summary")
+    public ResponseEntity<Map<String, Object>> getTestSummary() {
+        Map<String, Object> response = new HashMap<>();
         
-        double avgExecutionTime = serviceTests.stream()
-            .filter(t -> t.getExecutionTimeMs() != null)
-            .mapToLong(TestResult::getExecutionTimeMs)
-            .average()
-            .orElse(0.0);
+        long totalTests = mockTestResults.size();
+        long passedTests = mockTestResults.stream().mapToLong(t -> "PASSED".equals(t.get("status")) ? 1 : 0).sum();
+        long failedTests = mockTestResults.stream().mapToLong(t -> "FAILED".equals(t.get("status")) ? 1 : 0).sum();
         
-        long maxExecutionTime = serviceTests.stream()
-            .filter(t -> t.getExecutionTimeMs() != null)
-            .mapToLong(TestResult::getExecutionTimeMs)
-            .max()
-            .orElse(0L);
+        response.put("totalTests", totalTests);
+        response.put("passedTests", passedTests);
+        response.put("failedTests", failedTests);
+        response.put("successRate", totalTests > 0 ? (double) passedTests / totalTests * 100 : 0);
+        response.put("lastUpdated", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         
-        return Map.of(
-            "averageExecutionTime", avgExecutionTime,
-            "maxExecutionTime", maxExecutionTime,
-            "totalTests", serviceTests.size()
-        );
+        return ResponseEntity.ok(response);
     }
 
-    private Map<String, Object> convertToMap(TestResult testResult) {
-        Map<String, Object> result = new HashMap<>();
-        result.put("id", testResult.getId());
-        result.put("testName", testResult.getTestName());
-        result.put("serviceName", testResult.getServiceName());
-        result.put("testType", testResult.getTestType());
-        result.put("status", testResult.getStatus());
-        result.put("executionTimeMs", testResult.getExecutionTimeMs());
-        result.put("startTime", testResult.getStartTime());
-        result.put("endTime", testResult.getEndTime());
-        result.put("errorMessage", testResult.getErrorMessage());
-        result.put("confidenceScore", testResult.getConfidenceScore());
-        result.put("riskLevel", testResult.getRiskLevel());
-        result.put("tags", testResult.getTags());
-        result.put("testParameters", testResult.getTestParameters());
-        result.put("testOutput", testResult.getTestOutput());
-        result.put("performanceMetrics", testResult.getPerformanceMetrics());
-        result.put("environmentInfo", testResult.getEnvironmentInfo());
-        return result;
+    private List<Map<String, Object>> getContractTestsForService(String serviceName) {
+        return mockTestResults.stream()
+            .filter(test -> serviceName.equals(test.get("serviceName")))
+            .filter(test -> "CONTRACT_TEST".equals(test.get("testType")))
+            .collect(ArrayList::new, (list, test) -> {
+                Map<String, Object> contractTest = new HashMap<>();
+                contractTest.put("testName", test.get("testName"));
+                contractTest.put("passed", "PASSED".equals(test.get("status")));
+                contractTest.put("executionTime", test.get("executionTimeMs") + "ms");
+                contractTest.put("timestamp", test.get("timestamp"));
+                if ("FAILED".equals(test.get("status"))) {
+                    contractTest.put("errorMessage", test.get("errorMessage"));
+                }
+                list.add(contractTest);
+            }, ArrayList::addAll);
+    }
+
+    private List<Map<String, Object>> getIntegrationTestsForService(String serviceName) {
+        return mockTestResults.stream()
+            .filter(test -> serviceName.equals(test.get("serviceName")))
+            .filter(test -> "INTEGRATION_TEST".equals(test.get("testType")))
+            .collect(ArrayList::new, (list, test) -> {
+                Map<String, Object> integrationTest = new HashMap<>();
+                integrationTest.put("testName", test.get("testName"));
+                integrationTest.put("passed", "PASSED".equals(test.get("status")));
+                integrationTest.put("executionTime", test.get("executionTimeMs") + "ms");
+                integrationTest.put("timestamp", test.get("timestamp"));
+                integrationTest.put("testCategory", "Integration");
+                integrationTest.put("dependencies", getTestDependencies(test.get("testName").toString()));
+                if ("FAILED".equals(test.get("status"))) {
+                    integrationTest.put("errorMessage", test.get("errorMessage"));
+                }
+                list.add(integrationTest);
+            }, ArrayList::addAll);
+    }
+
+    private String calculateIntegrationTestTime(List<Map<String, Object>> tests) {
+        if (tests.isEmpty()) return "0ms";
+        
+        long totalTime = tests.stream()
+            .mapToLong(test -> {
+                String execTime = test.get("executionTime").toString();
+                return Long.parseLong(execTime.replace("ms", ""));
+            })
+            .sum();
+        
+        if (totalTime > 1000) {
+            return String.format("%.1fs", totalTime / 1000.0);
+        } else {
+            return totalTime + "ms";
+        }
+    }
+
+    private List<String> getTestDependencies(String testName) {
+        List<String> dependencies = new ArrayList<>();
+        
+        if (testName.contains("User")) {
+            dependencies.add("UserRepository");
+            dependencies.add("UserService");
+            dependencies.add("H2 Database");
+        } else if (testName.contains("Product")) {
+            dependencies.add("ProductRepository");
+            dependencies.add("ProductService");
+            dependencies.add("H2 Database");
+        } else if (testName.contains("Order")) {
+            dependencies.add("OrderRepository");
+            dependencies.add("OrderService");
+            dependencies.add("UserService");
+            dependencies.add("ProductService");
+            dependencies.add("H2 Database");
+        } else if (testName.contains("Notification")) {
+            dependencies.add("NotificationService");
+            dependencies.add("EmailService");
+            dependencies.add("SMSService");
+        } else if (testName.contains("Gateway")) {
+            dependencies.add("GatewayService");
+            dependencies.add("AuthenticationService");
+            dependencies.add("RateLimitingService");
+        }
+        
+        return dependencies;
+    }
+
+    private long calculateDaysSince(LocalDateTime timestamp) {
+        return java.time.Duration.between(timestamp, LocalDateTime.now()).toDays();
+    }
+
+    private List<Map<String, Object>> createMockTestData() {
+        List<Map<String, Object>> testData = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        
+        // User Service Tests
+        testData.add(createTestResult("user-service", "UserServiceContractTest.testCreateUser", "CONTRACT_TEST", "PASSED", now.minusHours(2), 45));
+        testData.add(createTestResult("user-service", "UserServiceContractTest.testGetUser", "CONTRACT_TEST", "PASSED", now.minusHours(2), 32));
+        testData.add(createTestResult("user-service", "UserServiceContractTest.testUpdateUser", "CONTRACT_TEST", "FAILED", now.minusDays(3), 67, "Contract mismatch: expected field 'email' but received 'emailAddress'"));
+        testData.add(createTestResult("user-service", "UserServiceTest.testCreateUser", "UNIT_TEST", "PASSED", now.minusHours(1), 23));
+        testData.add(createTestResult("user-service", "UserServiceTest.testValidateUser", "UNIT_TEST", "PASSED", now.minusHours(1), 18));
+        testData.add(createTestResult("user-service", "UserServiceIntegrationTest.testUserFlow", "INTEGRATION_TEST", "PASSED", now.minusHours(3), 156));
+        
+        // Product Service Tests
+        testData.add(createTestResult("product-service", "ProductServiceContractTest.testGetProduct", "CONTRACT_TEST", "PASSED", now.minusHours(1), 38));
+        testData.add(createTestResult("product-service", "ProductServiceContractTest.testCreateProduct", "CONTRACT_TEST", "PASSED", now.minusHours(1), 52));
+        testData.add(createTestResult("product-service", "ProductServiceContractTest.testUpdateProduct", "CONTRACT_TEST", "PASSED", now.minusHours(1), 41));
+        testData.add(createTestResult("product-service", "ProductServiceTest.testProductValidation", "UNIT_TEST", "PASSED", now.minusMinutes(30), 15));
+        testData.add(createTestResult("product-service", "ProductServiceTest.testProductSearch", "UNIT_TEST", "PASSED", now.minusMinutes(30), 28));
+        testData.add(createTestResult("product-service", "ProductServiceIntegrationTest.testProductCatalog", "INTEGRATION_TEST", "PASSED", now.minusHours(2), 89));
+        testData.add(createTestResult("product-service", "ProductServiceSecurityTest.testProductAccess", "SECURITY_TEST", "PASSED", now.minusHours(4), 134));
+        
+        // Order Service Tests
+        testData.add(createTestResult("order-service", "OrderServiceContractTest.testCreateOrder", "CONTRACT_TEST", "PASSED", now.minusMinutes(45), 78));
+        testData.add(createTestResult("order-service", "OrderServiceContractTest.testGetOrder", "CONTRACT_TEST", "PASSED", now.minusMinutes(45), 34));
+        testData.add(createTestResult("order-service", "OrderServiceTest.testOrderValidation", "UNIT_TEST", "PASSED", now.minusMinutes(20), 22));
+        testData.add(createTestResult("order-service", "OrderServiceTest.testOrderCalculation", "UNIT_TEST", "PASSED", now.minusMinutes(20), 31));
+        testData.add(createTestResult("order-service", "OrderServiceIntegrationTest.testOrderFlow", "INTEGRATION_TEST", "PASSED", now.minusHours(1), 203));
+        testData.add(createTestResult("order-service", "OrderServicePerformanceTest.testOrderProcessing", "PERFORMANCE_TEST", "PASSED", now.minusHours(5), 1200));
+        
+        // Notification Service Tests
+        testData.add(createTestResult("notification-service", "NotificationServiceContractTest.testSendNotification", "CONTRACT_TEST", "PASSED", now.minusMinutes(30), 56));
+        testData.add(createTestResult("notification-service", "NotificationServiceTest.testEmailTemplate", "UNIT_TEST", "PASSED", now.minusMinutes(15), 19));
+        testData.add(createTestResult("notification-service", "NotificationServiceTest.testSmsTemplate", "UNIT_TEST", "PASSED", now.minusMinutes(15), 17));
+        testData.add(createTestResult("notification-service", "NotificationServiceIntegrationTest.testNotificationFlow", "INTEGRATION_TEST", "PASSED", now.minusHours(2), 145));
+        
+        // Gateway Service Tests
+        testData.add(createTestResult("gateway-service", "GatewayServiceContractTest.testRouteRequest", "CONTRACT_TEST", "PASSED", now.minusMinutes(15), 42));
+        testData.add(createTestResult("gateway-service", "GatewayServiceTest.testAuthentication", "UNIT_TEST", "PASSED", now.minusMinutes(10), 25));
+        testData.add(createTestResult("gateway-service", "GatewayServiceTest.testRateLimiting", "UNIT_TEST", "PASSED", now.minusMinutes(10), 33));
+        testData.add(createTestResult("gateway-service", "GatewayServiceIntegrationTest.testRequestRouting", "INTEGRATION_TEST", "PASSED", now.minusHours(1), 98));
+        testData.add(createTestResult("gateway-service", "GatewayServiceSecurityTest.testSecurityHeaders", "SECURITY_TEST", "PASSED", now.minusHours(3), 87));
+        testData.add(createTestResult("gateway-service", "GatewayServicePerformanceTest.testLoadBalancing", "PERFORMANCE_TEST", "PASSED", now.minusHours(6), 2100));
+        
+        return testData;
+    }
+
+    private Map<String, Object> createTestResult(String serviceName, String testName, String testType, String status, LocalDateTime timestamp, long executionTimeMs) {
+        return createTestResult(serviceName, testName, testType, status, timestamp, executionTimeMs, null);
+    }
+
+    private Map<String, Object> createTestResult(String serviceName, String testName, String testType, String status, LocalDateTime timestamp, long executionTimeMs, String errorMessage) {
+        Map<String, Object> testResult = new HashMap<>();
+        testResult.put("serviceName", serviceName);
+        testResult.put("testName", testName);
+        testResult.put("testType", testType);
+        testResult.put("status", status);
+        testResult.put("executionTimeMs", executionTimeMs);
+        testResult.put("timestamp", timestamp);
+        if (errorMessage != null) {
+            testResult.put("errorMessage", errorMessage);
+        }
+        return testResult;
     }
 }
