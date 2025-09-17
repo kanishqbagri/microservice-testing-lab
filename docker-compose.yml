@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres-user:
     image: postgres:14
@@ -45,12 +43,33 @@ services:
     volumes:
       - postgres-notification-data:/var/lib/postgresql/data
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+
   gateway-service:
-    build: ./gateway-service
+    build: ./microservices/gateway-service
     ports:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_CLOUD_COMPATIBILITY_VERIFIER_ENABLED: false
     depends_on:
       - user-service
       - product-service
@@ -58,7 +77,7 @@ services:
       - notification-service
 
   user-service:
-    build: ./user-service
+    build: ./microservices/user-service
     ports:
       - "8081:8081"
     depends_on:
@@ -71,7 +90,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: pass
 
   product-service:
-    build: ./product-service
+    build: ./microservices/product-service
     ports:
       - "8082:8082"
     depends_on:
@@ -84,7 +103,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: product_pass
 
   order-service:
-    build: ./order-service
+    build: ./microservices/order-service
     ports:
       - "8083:8083"
     depends_on:
@@ -97,7 +116,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: order_pass
 
   notification-service:
-    build: ./notification-service
+    build: ./microservices/notification-service
     ports:
       - "8084:8084"
     depends_on:
@@ -109,15 +128,15 @@ services:
       SPRING_DATASOURCE_USERNAME: notification_user
       SPRING_DATASOURCE_PASSWORD: notification_pass
 
-  contract-test-generator:
-    build: ./contract-test-generator
-    ports:
-      - "8085:8085"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SERVER_PORT: 8085
-    volumes:
-      - ./generated-contracts:/app/generated-contracts
+  # contract-test-generator:
+  #   build: ./microservice-testing-lab/shared-utils/contract-test-generator
+  #   ports:
+  #     - "8085:8085"
+  #   environment:
+  #     SPRING_PROFILES_ACTIVE: docker
+  #     SERVER_PORT: 8085
+  #   volumes:
+  #     - ./generated-contracts:/app/generated-contracts
 
 volumes:
   postgres-user-data:

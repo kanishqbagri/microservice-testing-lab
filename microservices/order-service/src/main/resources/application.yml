@@ -38,3 +38,18 @@ spring:
     username: order_user
     password: order_pass
 
+---
+
+spring:
+  config:
+    activate:
+      on-profile: kubernetes
+  datasource:
+    url: jdbc:postgresql://localhost:5432/orders-db
+    username: order_user
+    password: order_pass
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+

@@ -1,0 +1,24 @@
+{{- if .Values.postgresSidecar.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.postgresSidecar.name }}-pvc
+  labels:
+    app: {{ .Values.postgresSidecar.name }}
+    {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.postgresSidecar.persistence.size }}
+  {{- if .Values.postgresSidecar.persistence.storageClass }}
+  storageClassName: {{ .Values.postgresSidecar.persistence.storageClass }}
+  {{- end }}
+{{- end }}

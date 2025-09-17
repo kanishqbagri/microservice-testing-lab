@@ -1,0 +1,38 @@
+1. Get the application URL by running these commands:
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.order_service.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Values.order_service.name }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.order_service.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ .Values.order_service.name }}'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ .Values.order_service.name }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo http://$SERVICE_IP:{{ .Values.order_service.service.port }}
+{{- else if contains "ClusterIP" .Values.order_service.service.type }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ .Values.order_service.name }}" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  echo "Visit http://127.0.0.1:8080 to use your application"
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
+{{- end }}
+
+2. Database Configuration:
+   PostgreSQL is deployed as a sidecar container in the same pod as the user service.
+   Connection: localhost:{{ .Values.postgresSidecar.port }}
+   Database: {{ .Values.postgresSidecar.database }}
+   Username: {{ .Values.postgresSidecar.username }}
+
+3. Health Check:
+   kubectl get pods -l app={{ .Values.order_service.name }}
+   kubectl logs -l app={{ .Values.order_service.name }} -c {{ .Values.order_service.name }}
+
+4. Database Health Check:
+   kubectl logs -l app={{ .Values.order_service.name }} -c {{ .Values.postgresSidecar.name }}
+
+5. Port Forward to Access Service:
+   kubectl port-forward svc/{{ .Values.order_service.name }} 8081:{{ .Values.order_service.service.port }}

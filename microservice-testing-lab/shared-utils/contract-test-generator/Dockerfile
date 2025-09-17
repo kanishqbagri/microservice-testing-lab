@@ -6,6 +6,7 @@ WORKDIR /app
 COPY mvnw .
 COPY mvnw.cmd .
 COPY pom.xml .
+COPY .mvn ./.mvn
 
 # Copy source code
 COPY src ./src

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.notification_service.name }}
+  labels:
+    app: {{ .Values.notification_service.name }}
+    {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.notification_service.service.type }}
+  ports:
+  - port: {{ .Values.notification_service.service.port }}
+    targetPort: {{ .Values.notification_service.service.targetPort }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Values.notification_service.name }}

@@ -19,3 +19,18 @@ spring:
     username: product_user
     password: product_pass
 
+---
+
+spring:
+  config:
+    activate:
+      on-profile: kubernetes
+  datasource:
+    url: jdbc:postgresql://localhost:5432/products-db
+    username: product_user
+    password: product_pass
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+

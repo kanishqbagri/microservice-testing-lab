@@ -38,3 +38,18 @@ spring:
     username: notification_user
     password: notification_pass
 
+---
+
+spring:
+  config:
+    activate:
+      on-profile: kubernetes
+  datasource:
+    url: jdbc:postgresql://localhost:5432/notifications-db
+    username: notification_user
+    password: notification_pass
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+

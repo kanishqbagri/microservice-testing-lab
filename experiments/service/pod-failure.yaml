@@ -1,0 +1,32 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: pod-failure
+  namespace: litmus
+  labels:
+    app: pod-failure
+    version: v1.0.0
+spec:
+  appinfo:
+    appns: 'microservices'
+    applabel: 'app=product-service'
+    appkind: 'deployment'
+  jobCleanUpPolicy: 'retain'
+  annotationCheck: 'false'
+  engineState: 'active'
+  chaosServiceAccount: litmus-admin
+  experiments:
+  - name: pod-delete
+    spec:
+      components:
+        env:
+        - name: TOTAL_CHAOS_DURATION
+          value: '30'
+        - name: CHAOS_INTERVAL
+          value: '10'
+        - name: FORCE
+          value: 'false'
+        - name: GRACE_PERIOD
+          value: '-1'
+        - name: TARGET_PODS
+          value: '1'

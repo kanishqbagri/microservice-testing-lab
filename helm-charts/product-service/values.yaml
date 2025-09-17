@@ -1,0 +1,131 @@
+# Default values for product-service with PostgreSQL sidecar
+# This is a YAML-formatted file.
+
+# product-service configuration
+product_service:
+  image:
+    repository: product-service
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  
+  name: product-service
+  port: 8082
+  
+  replicas: 1
+  
+  resources:
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+  
+  service:
+    type: ClusterIP
+    port: 8082
+    targetPort: 8082
+  
+  # Environment variables
+  env:
+    SPRING_PROFILES_ACTIVE: "kubernetes"
+    SERVER_PORT: "8082"
+    SPRING_DATASOURCE_URL: "jdbc:postgresql://localhost:5432/products-db"
+    SPRING_DATASOURCE_USERNAME: "product_user"
+    SPRING_DATASOURCE_PASSWORD: "product_pass"
+  
+  # Health checks
+  healthCheck:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    livenessProbe:
+      httpGet:
+        path: /actuator/health
+        port: 8082
+    readinessProbe:
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8082
+
+# PostgreSQL Sidecar Database configuration
+postgresSidecar:
+  image:
+    repository: postgres
+    tag: "14"
+    pullPolicy: IfNotPresent
+  
+  name: postgres-sidecar
+  port: 5432
+  database: products-db
+  username: product_user
+  password: product_pass
+  
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClass: ""
+  
+  resources:
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+  
+  healthCheck:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: product-service.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# ServiceMonitor for Prometheus (if using Prometheus Operator)
+serviceMonitor:
+  enabled: false
+  labels: {}
+  interval: 30s
+  scrapeTimeout: 10s
+
+# Pod Security Context
+podSecurityContext:
+  fsGroup: 2000
+
+# Security Context
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Annotations
+annotations: {}
+
+# Labels
+labels: {}
