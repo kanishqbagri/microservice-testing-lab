@@ -63,7 +63,7 @@ fi
 
 # Deploy the Helm chart
 echo -e "${BLUE}📦 Deploying Helm chart...${NC}"
-helm upgrade --install $RELEASE_NAME $CHART_PATH \
+helm upgrade --install $RELEASE_NAME . \
     --namespace $NAMESPACE \
     --wait \
     --timeout=5m

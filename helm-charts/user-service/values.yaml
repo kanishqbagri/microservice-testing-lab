@@ -36,7 +36,7 @@ userService:
   
   # Health checks
   healthCheck:
-    enabled: true
+    enabled: false
     initialDelaySeconds: 60
     periodSeconds: 10
     timeoutSeconds: 5
@@ -45,10 +45,16 @@ userService:
       httpGet:
         path: /actuator/health
         port: 8081
+        httpHeaders:
+        - name: Authorization
+          value: "Basic dXNlcjpwYXNz"
     readinessProbe:
       httpGet:
         path: /actuator/health/readiness
         port: 8081
+        httpHeaders:
+        - name: Authorization
+          value: "Basic dXNlcjpwYXNz"
 
 # PostgreSQL Sidecar Database configuration
 postgresSidecar:

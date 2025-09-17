@@ -78,7 +78,7 @@ deploy_service() {
     fi
     
     # Deploy the Helm chart
-    helm upgrade --install $service_name "./helm-charts/$service_name" \
+    helm upgrade --install $service_name "./$service_name" \
         --namespace $namespace \
         --wait \
         --timeout=5m

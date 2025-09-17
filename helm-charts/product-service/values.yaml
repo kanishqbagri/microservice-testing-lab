@@ -36,7 +36,7 @@ product_service:
   
   # Health checks
   healthCheck:
-    enabled: true
+    enabled: false
     initialDelaySeconds: 60
     periodSeconds: 10
     timeoutSeconds: 5
