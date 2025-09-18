@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(PactConsumerTestExt.class)
 @PactTestFor(providerName = "user-service", port = "8081")
-public class UserContractConsumerTest {
+public class UserContractConsumerTest extends ContractBaseTest {
 
     @Pact(consumer = "order-service")
     public RequestResponsePact createPact(PactDslWithProvider builder) {

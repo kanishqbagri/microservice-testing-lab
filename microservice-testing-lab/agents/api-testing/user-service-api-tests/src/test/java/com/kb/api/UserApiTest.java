@@ -1,5 +1,7 @@
 package com.kb.api;
 
+import com.kb.jarvis.core.test.BaseApiTest;
+
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.*;
@@ -8,7 +10,7 @@ import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class UserApiTest {
+public class UserApiTest extends BaseApiTest {
 
     @BeforeAll
     static void setup() {
