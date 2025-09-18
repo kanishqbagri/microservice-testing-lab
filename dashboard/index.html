@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jarvis Test Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -329,6 +331,11 @@
             </div>
         </div>
 
+        <!-- Per-Service Trends Widgets -->
+        <div class="row mb-4" id="service-trends-row">
+            <!-- Service trend widgets will be injected here by dashboard.js -->
+        </div>
+
         <!-- Performance Metrics -->
         <div class="row mb-4">
             <div class="col-md-6">
@@ -385,6 +392,34 @@
             </div>
         </div>
 
+        <!-- Aggregate Test Runs Table -->
+        <div class="table-container mb-4">
+            <h5 class="mb-3"><i class="fas fa-list me-2"></i>Test Run Aggregates</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Project</th>
+                            <th>Suite</th>
+                            <th>Status</th>
+                            <th>Started</th>
+                            <th>Finished</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="aggregate-runs-table">
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                <div class="loading">
+                                    <div class="spinner"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Test Results Table -->
         <div class="table-container">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -399,7 +434,6 @@
                     </select>
                 </div>
             </div>
-            
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead class="table-dark">
@@ -425,7 +459,6 @@
                     </tbody>
                 </table>
             </div>
-            
             <!-- Pagination -->
             <nav aria-label="Test results pagination">
                 <ul class="pagination justify-content-center" id="pagination">
@@ -454,6 +487,11 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!--
+        NOTE: Fill in your Supabase credentials in dashboard.js:
+        this.supabaseUrl = 'https://YOUR_SUPABASE_URL.supabase.co';
+        this.supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+    -->
     <script src="dashboard.js"></script>
 </body>
 </html>

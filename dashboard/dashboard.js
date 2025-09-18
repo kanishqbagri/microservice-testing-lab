@@ -1,7 +1,48 @@
 // Dashboard JavaScript Logic
+
+// Import Supabase client
+// <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script> should be added in index.html
+
 class JarvisDashboard {
+    // AGGREGATE RUNS VIEW
+    async loadAggregateRuns() {
+        // Fetch test runs with project and suite info
+        let { data: runs, error } = await this.supabase
+            .from('test_run')
+            .select('id,started_at,finished_at,status,test_suite(name,project(name))')
+            .order('started_at', { ascending: false });
+        if (error) return;
+        this.renderAggregateRunsTable(runs);
+    }
+
+    renderAggregateRunsTable(runs) {
+        const tbody = document.getElementById('aggregate-runs-table');
+        if (!tbody) return;
+        if (!runs || runs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">No runs found</td></tr>';
+            return;
+        }
+        tbody.innerHTML = runs.map(run => `
+            <tr style="cursor:pointer" onclick="dashboard.openRunDetails('${run.id}')">
+                <td>${run.test_suite?.project?.name || '-'}</td>
+                <td>${run.test_suite?.name || '-'}</td>
+                <td><span class="status-badge status-${run.status?.toLowerCase()}">${run.status}</span></td>
+                <td>${run.started_at ? new Date(run.started_at).toLocaleString() : '-'}</td>
+                <td>${run.finished_at ? new Date(run.finished_at).toLocaleString() : '-'}</td>
+                <td><button class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> Details</button></td>
+            </tr>
+        `).join('');
+    }
+
+    openRunDetails(runId) {
+        window.location.href = `run-details.html?run_id=${runId}`;
+    }
     constructor() {
-        this.baseUrl = 'http://localhost:8085/api/dashboard';
+        // Supabase connection
+        this.supabaseUrl = 'https://smuaribfocdanafiixzi.supabase.co';
+        this.supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtdWFyaWJmb2NkYW5hZmlpeHppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyMDcxMzUsImV4cCI6MjA3Mzc4MzEzNX0.l071CVCjnuKGmhZiNSpkGqbOh17ls6atb3aDSnC1vzs';
+        this.supabase = window.supabase.createClient(this.supabaseUrl, this.supabaseKey);
+
         this.currentPage = 0;
         this.pageSize = 20;
         this.filters = {
@@ -48,8 +89,10 @@ class JarvisDashboard {
                 this.loadTestResults(),
                 this.loadTrends(),
                 this.loadPerformanceMetrics(),
-                this.loadSecurityDashboard()
+                this.loadSecurityDashboard(),
             ]);
+            // Load aggregate runs after other widgets
+            await this.loadAggregateRuns();
         } catch (error) {
             console.error('Error loading dashboard data:', error);
             this.showError('Failed to load dashboard data');
@@ -58,34 +101,46 @@ class JarvisDashboard {
 
     async loadOverview() {
         try {
-            const response = await fetch(`${this.baseUrl}/overview`);
-            const data = await response.json();
-            
-            document.getElementById('total-tests').textContent = data.totalTests;
-            document.getElementById('passed-tests').textContent = data.passedTests;
-            document.getElementById('failed-tests').textContent = data.failedTests;
-            document.getElementById('success-rate').textContent = data.successRate.toFixed(1) + '%';
-            
-            // Populate service filter
+            // Fetch all test results with joins to project (service), suite, and run
+            let { data: results, error } = await this.supabase
+                .from('test_result')
+                .select(`id,status,duration_ms,created_at,
+                    test_case(name),
+                    test_run(started_at,suite_id,test_suite(name,project(name)))`);
+            if (error) throw error;
+
+            // Calculate stats
+            const totalTests = results.length;
+            const passedTests = results.filter(t => t.status === 'PASSED').length;
+            const failedTests = results.filter(t => t.status === 'FAILED').length;
+            const successRate = totalTests > 0 ? (passedTests / totalTests) * 100 : 0;
+
+            document.getElementById('total-tests').textContent = totalTests;
+            document.getElementById('passed-tests').textContent = passedTests;
+            document.getElementById('failed-tests').textContent = failedTests;
+            document.getElementById('success-rate').textContent = successRate.toFixed(1) + '%';
+
+            // Populate service filter (project.name)
             const serviceFilter = document.getElementById('service-filter');
             serviceFilter.innerHTML = '<option value="">All Services</option>';
-            Object.keys(data.serviceStats).forEach(service => {
+            const services = [...new Set(results.map(t => t.test_run.test_suite.project?.name).filter(Boolean))];
+            services.forEach(service => {
                 const option = document.createElement('option');
                 option.value = service;
                 option.textContent = service;
                 serviceFilter.appendChild(option);
             });
-            
-            // Populate test type filter
+
+            // Populate test type filter (suite name)
             const testTypeFilter = document.getElementById('test-type-filter');
             testTypeFilter.innerHTML = '<option value="">All Test Types</option>';
-            Object.keys(data.testTypeStats).forEach(testType => {
+            const testTypes = [...new Set(results.map(t => t.test_run.test_suite?.name).filter(Boolean))];
+            testTypes.forEach(testType => {
                 const option = document.createElement('option');
                 option.value = testType;
                 option.textContent = testType.replace('_', ' ');
                 testTypeFilter.appendChild(option);
             });
-            
         } catch (error) {
             console.error('Error loading overview:', error);
         }
@@ -93,20 +148,39 @@ class JarvisDashboard {
 
     async loadTestResults() {
         try {
-            const params = new URLSearchParams({
-                page: this.currentPage,
-                size: this.pageSize,
-                ...(this.filters.service && { service: this.filters.service }),
-                ...(this.filters.testType && { testType: this.filters.testType }),
-                ...(this.filters.status && { status: this.filters.status })
-            });
-            
-            const response = await fetch(`${this.baseUrl}/test-results?${params}`);
-            const data = await response.json();
-            
-            this.renderTestResultsTable(data.tests);
+            // Build Supabase query with joins
+            let query = this.supabase
+                .from('test_result')
+                .select(`id,status,duration_ms,created_at,
+                    test_case(name),
+                    test_run(started_at,suite_id,test_suite(name,project(name)))`, { count: 'exact' })
+                .order('created_at', { ascending: false });
+
+            // Filter by service (project.name)
+            if (this.filters.service) query = query.eq('test_run.test_suite.project.name', this.filters.service);
+            // Filter by test type (suite name)
+            if (this.filters.testType) query = query.eq('test_run.test_suite.name', this.filters.testType);
+            // Filter by status
+            if (this.filters.status) query = query.eq('status', this.filters.status);
+
+            // Pagination
+            const from = this.currentPage * this.pageSize;
+            const to = from + this.pageSize - 1;
+            query = query.range(from, to);
+
+            let { data: tests, count, error } = await query;
+            if (error) throw error;
+
+            // Fake pagination data for compatibility
+            const data = {
+                tests,
+                totalPages: Math.ceil(count / this.pageSize),
+                currentPage: this.currentPage,
+                hasPrevious: this.currentPage > 0,
+                hasNext: (this.currentPage + 1) * this.pageSize < count
+            };
+            this.renderTestResultsTable(tests);
             this.renderPagination(data);
-            
         } catch (error) {
             console.error('Error loading test results:', error);
         }
@@ -114,28 +188,32 @@ class JarvisDashboard {
 
     renderTestResultsTable(tests) {
         const tbody = document.getElementById('test-results-table');
-        
-        if (tests.length === 0) {
+        if (!tests || tests.length === 0) {
             tbody.innerHTML = '<tr><td colspan="8" class="text-center">No test results found</td></tr>';
             return;
         }
-        
-        tbody.innerHTML = tests.map(test => `
-            <tr>
-                <td>${test.testName}</td>
-                <td><span class="badge bg-secondary">${test.serviceName}</span></td>
-                <td><span class="badge bg-info">${test.testType.replace('_', ' ')}</span></td>
-                <td><span class="status-badge status-${test.status.toLowerCase()}">${test.status}</span></td>
-                <td>${test.executionTimeMs ? test.executionTimeMs + 'ms' : '-'}</td>
-                <td>${new Date(test.startTime).toLocaleString()}</td>
-                <td>${test.riskLevel ? `<span class="badge bg-warning">${test.riskLevel}</span>` : '-'}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="dashboard.showTestDetails('${test.id}')">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = tests.map(test => {
+            const serviceName = test.test_run?.test_suite?.project?.name || '-';
+            const testType = test.test_run?.test_suite?.name || '-';
+            const testName = test.test_case?.name || '-';
+            const startTime = test.test_run?.started_at ? new Date(test.test_run.started_at).toLocaleString() : '-';
+            return `
+                <tr>
+                    <td>${testName}</td>
+                    <td><span class="badge bg-secondary">${serviceName}</span></td>
+                    <td><span class="badge bg-info">${testType.replace('_', ' ')}</span></td>
+                    <td><span class="status-badge status-${test.status.toLowerCase()}">${test.status}</span></td>
+                    <td>${test.duration_ms ? test.duration_ms + 'ms' : '-'}</td>
+                    <td>${startTime}</td>
+                    <td>-</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="dashboard.showTestDetails('${test.id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
     renderPagination(data) {
@@ -186,15 +264,88 @@ class JarvisDashboard {
 
     async loadTrends() {
         try {
-            const response = await fetch(`${this.baseUrl}/trends?days=${this.filters.days}`);
-            const data = await response.json();
-            
-            this.renderTrendsChart(data.trendData);
-            this.renderDistributionChart(data.trendData);
-            
+            // Get date N days ago
+            const since = new Date();
+            since.setDate(since.getDate() - this.filters.days);
+            // Fetch all test results in range, with joins
+            let { data: results, error } = await this.supabase
+                .from('test_result')
+                .select(`id,status,created_at,
+                    test_case(name),
+                    test_run(started_at,suite_id,test_suite(name,project(name)))`)
+                .gte('created_at', since.toISOString());
+            if (error) throw error;
+
+            // Group by date
+            const trendData = {};
+            results.forEach(t => {
+                const date = t.created_at.split('T')[0];
+                if (!trendData[date]) trendData[date] = { date, passed: 0, failed: 0, skipped: 0 };
+                if (t.status === 'PASSED') trendData[date].passed++;
+                else if (t.status === 'FAILED') trendData[date].failed++;
+                else if (t.status === 'SKIPPED') trendData[date].skipped++;
+            });
+            const trendArr = Object.values(trendData).sort((a, b) => a.date.localeCompare(b.date));
+            this.renderTrendsChart(trendArr);
+            this.renderDistributionChart(trendArr);
+            // Render per-service trends
+            this.renderServiceTrendsWidget(results);
         } catch (error) {
             console.error('Error loading trends:', error);
         }
+    }
+
+    // New: Render widgets for per-service trends
+    renderServiceTrendsWidget(results) {
+        const container = document.getElementById('service-trends-row');
+        if (!container) return;
+        container.innerHTML = '';
+        // Group by service (project.name)
+        const byService = {};
+        results.forEach(t => {
+            const service = t.test_run?.test_suite?.project?.name || '-';
+            if (!byService[service]) byService[service] = [];
+            byService[service].push(t);
+        });
+        Object.entries(byService).forEach(([service, runs]) => {
+            // Group by date
+            const trend = {};
+            runs.forEach(t => {
+                const date = t.created_at.split('T')[0];
+                if (!trend[date]) trend[date] = { date, passed: 0, failed: 0, skipped: 0 };
+                if (t.status === 'PASSED') trend[date].passed++;
+                else if (t.status === 'FAILED') trend[date].failed++;
+                else if (t.status === 'SKIPPED') trend[date].skipped++;
+            });
+            const trendArr = Object.values(trend).sort((a, b) => a.date.localeCompare(b.date));
+            // Create canvas for chart
+            const chartId = `service-trend-${service.replace(/[^a-zA-Z0-9]/g, '')}`;
+            const card = document.createElement('div');
+            card.className = 'col-md-4 mb-4';
+            card.innerHTML = `
+                <div class=\"card\">
+                    <div class=\"card-header\"><b>${service}</b> Trend</div>
+                    <div class=\"card-body\"><canvas id=\"${chartId}\" height=\"180\"></canvas></div>
+                </div>
+            `;
+            container.appendChild(card);
+            // Draw chart
+            setTimeout(() => {
+                const ctx = document.getElementById(chartId).getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: trendArr.map(d => d.date),
+                        datasets: [
+                            { label: 'Passed', data: trendArr.map(d => d.passed), borderColor: '#27ae60', backgroundColor: 'rgba(39,174,96,0.1)', tension: 0.4 },
+                            { label: 'Failed', data: trendArr.map(d => d.failed), borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.1)', tension: 0.4 },
+                            { label: 'Skipped', data: trendArr.map(d => d.skipped), borderColor: '#f39c12', backgroundColor: 'rgba(243,156,18,0.1)', tension: 0.4 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, title: { display: false } }, scales: { y: { beginAtZero: true } } }
+                });
+            }, 100);
+        });
     }
 
     renderTrendsChart(trendData) {
