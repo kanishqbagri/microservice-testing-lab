@@ -101,29 +101,27 @@ class JarvisDashboard {
 
     async loadOverview() {
         try {
-            // Fetch all test results with joins to project (service), suite, and run
-            let { data: results, error } = await this.supabase
-                .from('test_result')
-                .select(`id,status,duration_ms,created_at,
-                    test_case(name),
-                    test_run(started_at,suite_id,test_suite(name,project(name)))`);
+            // Fetch all test runs with joins to project (service) and suite
+            let { data: runs, error } = await this.supabase
+                .from('test_run')
+                .select('id,status,started_at,finished_at,test_suite(name,project(name))');
             if (error) throw error;
 
             // Calculate stats
-            const totalTests = results.length;
-            const passedTests = results.filter(t => t.status === 'PASSED').length;
-            const failedTests = results.filter(t => t.status === 'FAILED').length;
-            const successRate = totalTests > 0 ? (passedTests / totalTests) * 100 : 0;
+            const totalRuns = runs.length;
+            const passedRuns = runs.filter(r => r.status === 'PASS').length;
+            const failedRuns = runs.filter(r => r.status === 'FAIL').length;
+            const successRate = totalRuns > 0 ? (passedRuns / totalRuns) * 100 : 0;
 
-            document.getElementById('total-tests').textContent = totalTests;
-            document.getElementById('passed-tests').textContent = passedTests;
-            document.getElementById('failed-tests').textContent = failedTests;
+            document.getElementById('total-tests').textContent = totalRuns;
+            document.getElementById('passed-tests').textContent = passedRuns;
+            document.getElementById('failed-tests').textContent = failedRuns;
             document.getElementById('success-rate').textContent = successRate.toFixed(1) + '%';
 
             // Populate service filter (project.name)
             const serviceFilter = document.getElementById('service-filter');
             serviceFilter.innerHTML = '<option value="">All Services</option>';
-            const services = [...new Set(results.map(t => t.test_run.test_suite.project?.name).filter(Boolean))];
+            const services = [...new Set(runs.map(r => r.test_suite?.project?.name).filter(Boolean))];
             services.forEach(service => {
                 const option = document.createElement('option');
                 option.value = service;
@@ -134,7 +132,7 @@ class JarvisDashboard {
             // Populate test type filter (suite name)
             const testTypeFilter = document.getElementById('test-type-filter');
             testTypeFilter.innerHTML = '<option value="">All Test Types</option>';
-            const testTypes = [...new Set(results.map(t => t.test_run.test_suite?.name).filter(Boolean))];
+            const testTypes = [...new Set(runs.map(r => r.test_suite?.name).filter(Boolean))];
             testTypes.forEach(testType => {
                 const option = document.createElement('option');
                 option.value = testType;
@@ -281,8 +279,8 @@ class JarvisDashboard {
             results.forEach(t => {
                 const date = t.created_at.split('T')[0];
                 if (!trendData[date]) trendData[date] = { date, passed: 0, failed: 0, skipped: 0 };
-                if (t.status === 'PASSED') trendData[date].passed++;
-                else if (t.status === 'FAILED') trendData[date].failed++;
+                if (t.status === 'PASS') trendData[date].passed++;
+                else if (t.status === 'FAIL') trendData[date].failed++;
                 else if (t.status === 'SKIPPED') trendData[date].skipped++;
             });
             const trendArr = Object.values(trendData).sort((a, b) => a.date.localeCompare(b.date));
@@ -313,8 +311,8 @@ class JarvisDashboard {
             runs.forEach(t => {
                 const date = t.created_at.split('T')[0];
                 if (!trend[date]) trend[date] = { date, passed: 0, failed: 0, skipped: 0 };
-                if (t.status === 'PASSED') trend[date].passed++;
-                else if (t.status === 'FAILED') trend[date].failed++;
+                if (t.status === 'PASS') trend[date].passed++;
+                else if (t.status === 'FAIL') trend[date].failed++;
                 else if (t.status === 'SKIPPED') trend[date].skipped++;
             });
             const trendArr = Object.values(trend).sort((a, b) => a.date.localeCompare(b.date));
@@ -444,16 +442,18 @@ class JarvisDashboard {
 
     async loadPerformanceMetrics() {
         try {
-            const response = await fetch(`${this.baseUrl}/performance-metrics`);
-            const data = await response.json();
-            
-            document.getElementById('avg-execution-time').textContent = 
-                data.averageExecutionTime ? Math.round(data.averageExecutionTime) : '-';
-            document.getElementById('max-execution-time').textContent = 
-                data.maxExecutionTime ? data.maxExecutionTime : '-';
-            document.getElementById('slow-tests-count').textContent = 
-                data.slowTests ? data.slowTests.length : 0;
-            
+            // Fetch all test results
+            let { data: results, error } = await this.supabase
+                .from('test_result')
+                .select('duration_ms');
+            if (error) throw error;
+            const durations = results.map(r => r.duration_ms).filter(Number.isFinite);
+            const avg = durations.length ? durations.reduce((a, b) => a + b, 0) / durations.length : 0;
+            const max = durations.length ? Math.max(...durations) : 0;
+            const slowTests = durations.filter(d => d > 1000).length;
+            document.getElementById('avg-execution-time').textContent = durations.length ? Math.round(avg) : '-';
+            document.getElementById('max-execution-time').textContent = durations.length ? max : '-';
+            document.getElementById('slow-tests-count').textContent = slowTests;
         } catch (error) {
             console.error('Error loading performance metrics:', error);
         }
@@ -461,14 +461,24 @@ class JarvisDashboard {
 
     async loadSecurityDashboard() {
         try {
-            const response = await fetch(`${this.baseUrl}/security-dashboard`);
-            const data = await response.json();
-            
-            document.getElementById('security-score').textContent = 
-                data.securityScore ? data.securityScore.toFixed(1) : '-';
-            document.getElementById('security-tests-count').textContent = 
-                data.totalSecurityTests || 0;
-            
+            // Fetch all test results with test_case
+            let { data: results, error } = await this.supabase
+                .from('test_result')
+                .select('id,status,test_case(name,tags)');
+            if (error) throw error;
+            // Security test: name or tags contains 'security' (case-insensitive)
+            const isSecurity = t => {
+                const name = t.test_case?.name?.toLowerCase() || '';
+                const tags = Array.isArray(t.test_case?.tags) ? t.test_case.tags.map(tag => String(tag).toLowerCase()) : [];
+                return name.includes('security') || tags.some(tag => tag.includes('security'));
+            };
+            const securityTests = results.filter(isSecurity);
+            const totalSecurityTests = securityTests.length;
+            // Security score: percent passed
+            const passed = securityTests.filter(t => t.status === 'PASS').length;
+            const securityScore = totalSecurityTests ? (passed / totalSecurityTests) * 100 : 0;
+            document.getElementById('security-score').textContent = totalSecurityTests ? securityScore.toFixed(1) : '-';
+            document.getElementById('security-tests-count').textContent = totalSecurityTests;
         } catch (error) {
             console.error('Error loading security dashboard:', error);
         }
