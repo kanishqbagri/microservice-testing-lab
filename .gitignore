@@ -28,3 +28,7 @@ Thumbs.db
 !**/mvnw
 !**/mvnw.cmd
 
+# Local credentials and sensitive files
+local-service-credentials.properties
+*.credentials
+*.secrets
