@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis Executive Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #17a2b8;
+            --executive-blue: #1e3a8a;
+            --executive-gold: #f59e0b;
+            --executive-green: #059669;
+            --executive-red: #dc2626;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .executive-header {
+            background: linear-gradient(135deg, var(--executive-blue), var(--executive-gold));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .executive-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .executive-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+
+        .widget-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+
+        .widget-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .widget-header {
+            background: linear-gradient(135deg, var(--executive-blue), var(--secondary-color));
+            color: white;
+            border-radius: 20px 20px 0 0;
+            padding: 1.5rem;
+            border: none;
+        }
+
+        .widget-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .widget-icon {
+            font-size: 2rem;
+            margin-right: 1rem;
+        }
+
+        .scorecard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+
+        .scorecard-item {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .scorecard-item:hover {
+            border-color: var(--executive-blue);
+            transform: scale(1.02);
+        }
+
+        .scorecard-value {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .scorecard-label {
+            font-size: 1rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .scorecard-trend {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .trend-up {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--executive-green);
+        }
+
+        .trend-down {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--executive-red);
+        }
+
+        .trend-neutral {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+
+        .impact-analysis {
+            padding: 2rem;
+        }
+
+        .impact-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--executive-blue);
+            transition: all 0.3s ease;
+        }
+
+        .impact-item:hover {
+            background: #f1f5f9;
+            transform: translateX(5px);
+        }
+
+        .impact-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--executive-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .impact-description {
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+
+        .impact-metrics {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .impact-metric {
+            background: white;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .impact-metric-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--executive-blue);
+        }
+
+        .impact-metric-label {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .quality-insights {
+            padding: 2rem;
+        }
+
+        .quality-metric {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .quality-metric-info {
+            flex: 1;
+        }
+
+        .quality-metric-title {
+            font-weight: 600;
+            color: var(--executive-blue);
+            margin-bottom: 0.25rem;
+        }
+
+        .quality-metric-description {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .quality-score {
+            font-size: 2rem;
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .score-excellent {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--executive-green);
+        }
+
+        .score-good {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .score-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--executive-gold);
+        }
+
+        .score-critical {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--executive-red);
+        }
+
+        .anomaly-detection {
+            padding: 2rem;
+        }
+
+        .anomaly-item {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--executive-red);
+        }
+
+        .anomaly-item.warning {
+            background: #fffbeb;
+            border-color: #fed7aa;
+            border-left-color: var(--executive-gold);
+        }
+
+        .anomaly-item.info {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+            border-left-color: var(--secondary-color);
+        }
+
+        .anomaly-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .anomaly-description {
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+
+        .anomaly-severity {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .severity-critical {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--executive-red);
+        }
+
+        .severity-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--executive-gold);
+        }
+
+        .severity-info {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--executive-blue), var(--executive-gold));
+            border: none;
+            color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid var(--executive-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert-executive {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Intelligent Impact Analysis Styles */
+        .impact-analysis-container {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .metric-card {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .metric-value {
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+
+        .metric-subtitle {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .blast-radius-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .blast-service-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .blast-service-card.direct {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .blast-service-card.indirect {
+            border-color: #f59e0b;
+            background: #fffbeb;
+        }
+
+        .service-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .service-name {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .impact-type-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .impact-type-badge.direct {
+            background: #fecaca;
+            color: #dc2626;
+        }
+
+        .impact-type-badge.indirect {
+            background: #fed7aa;
+            color: #ea580c;
+        }
+
+        .service-metrics {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .impact-probability {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .probability-label {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .probability-value {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .criticality-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .criticality-badge.critical {
+            background: #fecaca;
+            color: #dc2626;
+        }
+
+        .criticality-badge.high {
+            background: #fed7aa;
+            color: #ea580c;
+        }
+
+        .criticality-badge.medium {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .risk-breakdown {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .risk-factor {
+            margin-bottom: 1rem;
+        }
+
+        .factor-name {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .risk-score {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .recommendation-item {
+            background: white;
+            border-left: 4px solid #e2e8f0;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .recommendation-item.high {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .recommendation-item.medium {
+            border-left-color: #f59e0b;
+            background: #fffbeb;
+        }
+
+        .recommendation-item.low {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .priority-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .priority-badge.high {
+            background: #fecaca;
+            color: #dc2626;
+        }
+
+        .priority-badge.medium {
+            background: #fed7aa;
+            color: #ea580c;
+        }
+
+        .priority-badge.low {
+            background: #bbf7d0;
+            color: #16a34a;
+        }
+
+        .recommendation-type {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .recommendation-message {
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .recommendation-action {
+            font-size: 0.875rem;
+        }
+
+        /* Suggestions toggle button */
+        .suggestions-toggle-btn {
+            transition: all 0.2s ease;
+            border: 1px solid #e2e8f0;
+        }
+
+        .suggestions-toggle-btn:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        /* Smooth transitions for suggestions */
+        .suggestion-item {
+            transition: all 0.2s ease;
+        }
+
+        .suggestions-container {
+            transition: max-height 0.3s ease, opacity 0.2s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Executive Header -->
+    <div class="executive-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="executive-title">
+                        <i class="fas fa-chart-line me-3"></i>
+                        Jarvis Executive Dashboard
+                    </h1>
+                    <p class="executive-subtitle">
+                        Strategic Insights & Impact Analysis for Leadership
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex align-items-center justify-content-end">
+                        <i class="fas fa-clock me-2"></i>
+                        <span id="current-time" class="fs-5"></span>
+                    </div>
+                    <div class="mt-2">
+                        <span class="badge bg-light text-dark fs-6">Last Updated: <span id="last-updated">-</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Data Coverage Summary -->
+        <div id="data-coverage-summary" class="mb-4">
+            <div class="alert alert-info">
+                <i class="fas fa-database"></i>
+                <strong>Data Coverage:</strong> Loading data from last 3 months...
+            </div>
+        </div>
+
+        <!-- Smart Scorecards Widget -->
+        <div class="widget-card">
+            <div class="widget-header">
+                <h2 class="widget-title">
+                    <i class="fas fa-microservice widget-icon"></i>
+                    Per-Service Scorecards
+                </h2>
+            </div>
+            <div class="scorecard-grid" id="smart-scorecards">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Intelligent Impact Analysis Widget -->
+        <div class="widget-card">
+            <div class="widget-header">
+                <h2 class="widget-title">
+                    <i class="fas fa-project-diagram widget-icon"></i>
+                    Intelligent Impact Analysis
+                </h2>
+            </div>
+            <div class="impact-analysis" id="impact-analysis">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PR Quality Insights Widget -->
+        <div class="widget-card">
+            <div class="widget-header">
+                <h2 class="widget-title">
+                    <i class="fas fa-star widget-icon"></i>
+                    PR Quality Insights
+                </h2>
+            </div>
+            <div class="quality-insights" id="quality-insights">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Anomaly Detection Widget -->
+        <div class="widget-card">
+            <div class="widget-header">
+                <h2 class="widget-title">
+                    <i class="fas fa-exclamation-triangle widget-icon"></i>
+                    Anomaly Detection
+                </h2>
+            </div>
+            <div class="anomaly-detection" id="anomaly-detection">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Refresh Button -->
+    <button class="btn refresh-btn" onclick="executiveDashboard.refreshDashboard()" title="Manual Refresh Only - Click to Update Data">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="intelligent-impact-analysis.js"></script>
+    <script src="executive-dashboard.js"></script>
+</body>
+</html>
