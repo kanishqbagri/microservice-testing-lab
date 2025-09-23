@@ -58,31 +58,31 @@ class ExecutiveDashboard {
     // 1. Smart Scorecards - Per Service with Weighted Metrics
     async loadSmartScorecards() {
         try {
-            // Calculate date range for last 3 months
-            const threeMonthsAgo = new Date();
-            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-            const threeMonthsAgoISO = threeMonthsAgo.toISOString();
+            // Calculate date range for last 2 months
+            const twoMonthsAgo = new Date();
+            twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+            const twoMonthsAgoISO = twoMonthsAgo.toISOString();
 
-            console.log(`Fetching test data from last 3 months (since ${threeMonthsAgoISO})...`);
+            console.log(`Fetching test data from last 2 months (since ${twoMonthsAgoISO})...`);
 
             // Debug: Query total record counts first
-            await this.debugTableCounts(threeMonthsAgoISO);
+            await this.debugTableCounts(twoMonthsAgoISO);
 
             // Fetch all test runs with pagination
             const testRuns = await this.fetchAllRecords('test_run', {
                 select: `id, status, started_at, finished_at, test_suite(name, project(name))`,
-                filter: { column: 'started_at', operator: 'gte', value: threeMonthsAgoISO },
+                filter: { column: 'started_at', operator: 'gte', value: twoMonthsAgoISO },
                 orderBy: { column: 'started_at', ascending: false }
             });
 
             // Fetch all test results with pagination
             const testResults = await this.fetchAllRecords('test_result', {
                 select: `id, status, duration_ms, created_at, test_case(name, tags), test_run(test_suite(name, project(name)))`,
-                filter: { column: 'created_at', operator: 'gte', value: threeMonthsAgoISO },
+                filter: { column: 'created_at', operator: 'gte', value: twoMonthsAgoISO },
                 orderBy: { column: 'created_at', ascending: false }
             });
 
-            console.log(`Fetched ${testRuns?.length || 0} test runs and ${testResults?.length || 0} test results from last 3 months`);
+            console.log(`Fetched ${testRuns?.length || 0} test runs and ${testResults?.length || 0} test results from last 2 months`);
 
             // Validate and analyze the data
             this.validateTestData(testRuns, testResults);
@@ -147,32 +147,32 @@ class ExecutiveDashboard {
     }
 
     // Debug method to query table counts
-    async debugTableCounts(threeMonthsAgoISO) {
+    async debugTableCounts(twoMonthsAgoISO) {
         console.log('=== DEBUG: Querying table counts ===');
         
         try {
-            // Count total test_run records in last 3 months
+            // Count total test_run records in last 2 months
             const { count: testRunCount, error: testRunError } = await this.supabase
                 .from('test_run')
                 .select('*', { count: 'exact', head: true })
-                .gte('started_at', threeMonthsAgoISO);
+                .gte('started_at', twoMonthsAgoISO);
             
             if (testRunError) {
                 console.error('Error counting test_run records:', testRunError);
             } else {
-                console.log(`📊 Total test_run records in last 3 months: ${testRunCount}`);
+                console.log(`📊 Total test_run records in last 2 months: ${testRunCount}`);
             }
 
-            // Count total test_result records in last 3 months
+            // Count total test_result records in last 2 months
             const { count: testResultCount, error: testResultError } = await this.supabase
                 .from('test_result')
                 .select('*', { count: 'exact', head: true })
-                .gte('created_at', threeMonthsAgoISO);
+                .gte('created_at', twoMonthsAgoISO);
             
             if (testResultError) {
                 console.error('Error counting test_result records:', testResultError);
             } else {
-                console.log(`📊 Total test_result records in last 3 months: ${testResultCount}`);
+                console.log(`📊 Total test_result records in last 2 months: ${testResultCount}`);
             }
 
             // Count total records in each table (no date filter)
@@ -204,17 +204,36 @@ class ExecutiveDashboard {
 
     // Pagination function to fetch all records
     async fetchAllRecords(table, options = {}) {
-        const { select = '*', filter = null, orderBy = null, pageSize = 1000 } = options;
+        const { select = '*', filter = null, orderBy = null, pageSize = 1000 } = options; // Use Supabase's limit
         let allRecords = [];
         let from = 0;
         let hasMore = true;
         let pageCount = 0;
 
-        console.log(`Starting paginated fetch for ${table}...`);
+        console.log(`Starting paginated fetch for ${table} with pageSize: ${pageSize} (Supabase limit)...`);
         this.updateLoadingStatus(`Fetching ${table} data...`);
+
+        // Get total count first to show progress
+        let totalCount = null;
+        try {
+            let countQuery = this.supabase.from(table).select('*', { count: 'exact', head: true });
+            if (filter) {
+                countQuery = countQuery[filter.operator](filter.column, filter.value);
+            }
+            const { count, error: countError } = await countQuery;
+            if (!countError && count !== null) {
+                totalCount = count;
+                console.log(`📊 Total records available: ${totalCount}`);
+                this.updateLoadingStatus(`Found ${totalCount} ${table} records, fetching...`);
+            }
+        } catch (error) {
+            console.log(`Could not get total count for ${table}:`, error);
+        }
 
         while (hasMore) {
             pageCount++;
+            console.log(`📄 Fetching page ${pageCount} for ${table} (records ${from + 1} to ${from + pageSize})`);
+            
             let query = this.supabase
                 .from(table)
                 .select(select)
@@ -233,22 +252,38 @@ class ExecutiveDashboard {
             const { data, error } = await query;
 
             if (error) {
-                console.error(`Error fetching ${table} records:`, error);
+                console.error(`❌ Error fetching ${table} records:`, error);
                 throw error;
             }
+
+            const recordsReturned = data ? data.length : 0;
+            console.log(`✅ Page ${pageCount} returned ${recordsReturned} records`);
 
             if (data && data.length > 0) {
                 allRecords = allRecords.concat(data);
                 from += pageSize;
                 hasMore = data.length === pageSize; // Continue if we got a full page
-                console.log(`Fetched ${data.length} ${table} records (total: ${allRecords.length})`);
-                this.updateLoadingStatus(`Fetched ${allRecords.length} ${table} records...`);
+                
+                const progressPercent = totalCount ? Math.round((allRecords.length / totalCount) * 100) : 0;
+                const progressText = totalCount ? 
+                    `📊 Progress: ${allRecords.length}/${totalCount} ${table} records (${progressPercent}%)` :
+                    `📊 Progress: ${allRecords.length} total ${table} records fetched`;
+                
+                console.log(progressText);
+                this.updateLoadingStatus(`Fetched ${allRecords.length}${totalCount ? `/${totalCount}` : ''} ${table} records...`);
+                
+                // Add a small delay to prevent overwhelming the database
+                if (hasMore) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
             } else {
                 hasMore = false;
+                console.log(`🏁 No more data available for ${table}`);
             }
         }
 
-        console.log(`Completed paginated fetch for ${table}: ${allRecords.length} total records`);
+        console.log(`🎉 Completed paginated fetch for ${table}: ${allRecords.length} total records across ${pageCount} pages`);
+        console.log(`📈 Average records per page: ${pageCount > 0 ? Math.round(allRecords.length / pageCount) : 0}`);
         return allRecords;
     }
 
@@ -265,10 +300,10 @@ class ExecutiveDashboard {
     }
 
     updateDataCoverageSummary(testRuns, testResults) {
-        const threeMonthsAgo = new Date();
-        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+        const twoMonthsAgo = new Date();
+        twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
         
-        const dateRange = `${threeMonthsAgo.toLocaleDateString()} - ${new Date().toLocaleDateString()}`;
+        const dateRange = `${twoMonthsAgo.toLocaleDateString()} - ${new Date().toLocaleDateString()}`;
         
         // Find the data coverage element and update it
         const coverageElement = document.getElementById('data-coverage-summary');
@@ -277,7 +312,7 @@ class ExecutiveDashboard {
                 <div class="alert alert-info">
                     <i class="fas fa-database"></i>
                     <strong>Data Coverage:</strong> ${testRuns?.length || 0} test runs, ${testResults?.length || 0} test results 
-                    from last 3 months (${dateRange})
+                    from last 2 months (${dateRange})
                 </div>
             `;
         }
@@ -287,13 +322,23 @@ class ExecutiveDashboard {
         const now = new Date();
         const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-        // Test type weights for scoring
+        // Test type weights for scoring - comprehensive coverage
         const testTypeWeights = {
-            'unit': 0.25,      // Unit tests - foundation
-            'api': 0.30,       // API tests - critical for integration
-            'integration': 0.25, // Integration tests - system coherence
-            'ui': 0.10,        // UI tests - user experience
-            'system': 0.10     // System tests - end-to-end validation
+            // Core test types from your data
+            'api': 0.20,           // API tests - critical for integration
+            'integration': 0.18,   // Integration tests - system coherence
+            'ui': 0.15,            // UI tests - user experience
+            'contract': 0.18,      // Contract tests - service boundaries
+            'chaos': 0.15,         // Chaos tests - resilience testing
+            
+            // Additional test types that might exist
+            'unit': 0.08,          // Unit tests - foundation
+            'system': 0.04,        // System tests - end-to-end validation
+            'performance': 0.01,   // Performance tests
+            'security': 0.01,      // Security tests
+            'e2e': 0.00,           // End-to-end tests (covered by system)
+            'functional': 0.00,    // Functional tests (covered by other types)
+            'acceptance': 0.00     // Acceptance tests (covered by other types)
         };
 
         // Group data by service (using test suite name as service identifier)
@@ -302,6 +347,17 @@ class ExecutiveDashboard {
         // Process test runs
         console.log('Sample test run data:', testRuns.slice(0, 3));
         console.log('Sample test result data:', testResults.slice(0, 3));
+        
+        // Debug: Show all unique test suite names found
+        const uniqueSuiteNames = [...new Set(testRuns.map(r => r.test_suite?.name).filter(Boolean))];
+        console.log('All unique test suite names found:', uniqueSuiteNames);
+        
+        // Debug: Show categorized test types
+        const categorizedTypes = uniqueSuiteNames.map(name => ({
+            suiteName: name,
+            categorizedType: this.categorizeTestType(name)
+        }));
+        console.log('Categorized test types:', categorizedTypes);
         
         testRuns.forEach(run => {
             const serviceName = this.extractServiceName(run.test_suite?.name || 'Unknown Service');
@@ -429,13 +485,29 @@ class ExecutiveDashboard {
     }
 
     categorizeTestType(suiteName) {
-        const name = suiteName.toLowerCase();
+        if (!suiteName) return 'unknown';
+        
+        const name = suiteName.toLowerCase().trim();
+        
+        // Exact matches for your specific test types
+        if (name.includes('api')) return 'api';
+        if (name.includes('ui')) return 'ui';
+        if (name.includes('integration')) return 'integration';
+        if (name.includes('contract')) return 'contract';
+        if (name.includes('chaos')) return 'chaos';
+        
+        // Additional test types that might exist
         if (name.includes('unit') || name.includes('component')) return 'unit';
-        if (name.includes('api') || name.includes('rest') || name.includes('endpoint')) return 'api';
-        if (name.includes('integration') || name.includes('contract')) return 'integration';
-        if (name.includes('ui') || name.includes('e2e') || name.includes('end-to-end')) return 'ui';
         if (name.includes('system') || name.includes('smoke') || name.includes('regression')) return 'system';
-        return 'unit'; // Default to unit tests
+        if (name.includes('performance') || name.includes('load')) return 'performance';
+        if (name.includes('security') || name.includes('auth')) return 'security';
+        if (name.includes('e2e') || name.includes('end-to-end')) return 'e2e';
+        if (name.includes('functional')) return 'functional';
+        if (name.includes('acceptance')) return 'acceptance';
+        
+        // Log unknown test types for debugging
+        console.warn(`Unknown test type: "${suiteName}" - defaulting to 'api'`);
+        return 'api'; // Default to API tests since that's most common
     }
 
     calculateServiceScores(service, testTypeWeights) {
@@ -445,11 +517,19 @@ class ExecutiveDashboard {
 
         console.log(`Calculating scores for ${service.name}:`, service);
         console.log(`Service testTypes:`, service.testTypes);
+        console.log(`Service testTypes values:`, Object.values(service.testTypes || {}));
 
         // Calculate score for each test type
-        Object.entries(service.testTypes).forEach(([testType, data]) => {
+        Object.entries(service.testTypes || {}).forEach(([testType, data]) => {
             console.log(`  Processing test type: ${testType}, data:`, data);
-            const weight = testTypeWeights[testType] || 0.1;
+            
+            // Skip test types that don't have defined weights
+            if (!testTypeWeights[testType]) {
+                console.log(`  Skipping ${testType} - no weight defined`);
+                return;
+            }
+            
+            const weight = testTypeWeights[testType];
             
             // Ensure data.passed and data.total are numbers
             const passed = Number(data.passed) || 0;
@@ -475,46 +555,67 @@ class ExecutiveDashboard {
                 avgDuration: Math.round(avgDuration)
             };
 
-            weightedScore += adjustedScore * weight;
+            // Use the 1-10 scale score for weighted calculation, not the raw percentage
+            weightedScore += score1to10 * weight;
             totalWeight += weight;
         });
 
         console.log(`  Weighted Score: ${weightedScore}, Total Weight: ${totalWeight}`);
+        console.log(`  Available test types in service:`, Object.keys(service.testTypes || {}));
+        console.log(`  Defined weights:`, testTypeWeights);
         
-        let overallScorePercentage = totalWeight > 0 ? Math.round(weightedScore / totalWeight) : 0;
+        // Debug: Show which test types were processed and their weights
+        const processedTypes = [];
+        Object.entries(service.testTypes || {}).forEach(([testType, data]) => {
+            if (testTypeWeights[testType]) {
+                processedTypes.push(`${testType}(${testTypeWeights[testType]})`);
+            } else {
+                console.warn(`  ⚠️  Test type "${testType}" has no defined weight - skipping`);
+            }
+        });
+        console.log(`  Processed test types with weights:`, processedTypes);
         
-        // Ensure overallScorePercentage is a valid number
-        if (isNaN(overallScorePercentage)) {
-            console.warn(`NaN detected in overallScorePercentage calculation. weightedScore: ${weightedScore}, totalWeight: ${totalWeight}`);
-            overallScorePercentage = 0;
+        // Calculate overall score from 1-10 scale (no conversion needed)
+        let overallScore;
+        if (totalWeight > 0 && !isNaN(weightedScore) && !isNaN(totalWeight)) {
+            overallScore = Math.round(weightedScore / totalWeight);
+        } else {
+            console.warn(`Invalid calculation values. weightedScore: ${weightedScore}, totalWeight: ${totalWeight}`);
+            overallScore = 3;
         }
         
-        // Apply bonuses for good practices
-        const testCountBonus = Math.min(5, Math.floor(service.totalTests / 100)); // Bonus for having many tests
-        const stabilityBonus = service.recentRuns > 10 ? 2 : 0; // Bonus for active testing
-        const coverageBonus = Object.keys(service.testTypes).length >= 3 ? 3 : 0; // Bonus for diverse test types
+        // Ensure overallScore is a valid number
+        if (isNaN(overallScore) || overallScore < 1 || overallScore > 10) {
+            console.warn(`NaN or invalid overallScore detected: ${overallScore}. weightedScore: ${weightedScore}, totalWeight: ${totalWeight}`);
+            overallScore = 3;
+        }
         
-        overallScorePercentage = Math.min(100, overallScorePercentage + testCountBonus + stabilityBonus + coverageBonus);
+        // Apply bonuses for good practices (in 1-10 scale)
+        const testCountBonus = Math.min(1, Math.floor((service.totalTests || 0) / 500)); // Bonus for having many tests (max 1 point)
+        const stabilityBonus = (service.recentRuns || 0) > 10 ? 0.5 : 0; // Bonus for active testing (max 0.5 points)
+        const coverageBonus = Object.keys(service.testTypes || {}).length >= 3 ? 0.5 : 0; // Bonus for diverse test types (max 0.5 points)
         
-        console.log(`  Bonuses: Test Count (+${testCountBonus}%), Stability (+${stabilityBonus}%), Coverage (+${coverageBonus}%)`);
-        console.log(`  Final overallScorePercentage: ${overallScorePercentage}`);
+        // Calculate final score with proper validation
+        const bonusTotal = testCountBonus + stabilityBonus + coverageBonus;
+        const finalScore = overallScore + bonusTotal;
         
-        const overallScore = this.convertPercentageToScore(overallScorePercentage);
+        console.log(`  Bonuses: Test Count (+${testCountBonus}), Stability (+${stabilityBonus}), Coverage (+${coverageBonus})`);
+        console.log(`  Base Score: ${overallScore}, Bonus Total: ${bonusTotal}, Final Score: ${finalScore}`);
+        
+        // Ensure final score is valid before rounding
+        if (isNaN(finalScore) || !isFinite(finalScore)) {
+            console.warn(`Invalid final score: ${finalScore}. weightedScore: ${weightedScore}, totalWeight: ${totalWeight}, overallScore: ${overallScore}`);
+            overallScore = 3;
+        } else {
+            overallScore = Math.min(10, Math.max(1, Math.round(finalScore)));
+        }
+        
+        console.log(`  Final overallScore: ${overallScore}/10`);
         
         // Final safety check
-        if (isNaN(overallScore)) {
-            console.warn(`NaN detected in final overallScore. overallScorePercentage: ${overallScorePercentage}`);
-            return {
-                overallScore: 3, // Default minimum score
-                stabilityScore: this.convertPercentageToScore(this.calculateStabilityScore(service)),
-                coverageScore: this.convertPercentageToScore(this.calculateCoverageScore(service.testTypes, testTypeWeights)),
-                riskLevel: 'HIGH',
-                testTypeScores,
-                totalTests: service.totalTests,
-                totalRuns: service.totalRuns,
-                recentRuns: service.recentRuns,
-                lastRunDate: service.lastRun ? new Date(service.lastRun).toLocaleDateString() : 'Never'
-            };
+        if (isNaN(overallScore) || overallScore < 1 || overallScore > 10) {
+            console.warn(`NaN or invalid overallScore detected: ${overallScore}. weightedScore: ${weightedScore}, totalWeight: ${totalWeight}`);
+            overallScore = 3;
         }
         
         // System Stability Score (based on recent failure patterns) - convert to 1-10
@@ -522,24 +623,31 @@ class ExecutiveDashboard {
         const stabilityScore = this.convertPercentageToScore(stabilityScorePercentage);
         
         // Risk Assessment
-        const riskLevel = this.assessServiceRisk(service, overallScorePercentage);
+        const riskLevel = this.assessServiceRisk(service, overallScore);
         
         // Test Coverage Score (based on test type diversity) - convert to 1-10
         const coverageScorePercentage = this.calculateCoverageScore(service.testTypes, testTypeWeights);
         const coverageScore = this.convertPercentageToScore(coverageScorePercentage);
 
-        console.log(`  Overall: ${overallScore}/10 (${overallScorePercentage}%), Stability: ${stabilityScore}/10, Coverage: ${coverageScore}/10, Risk: ${riskLevel}`);
+        console.log(`  Overall: ${overallScore}/10, Stability: ${stabilityScore}/10, Coverage: ${coverageScore}/10, Risk: ${riskLevel}`);
 
         // Generate improvement suggestions
         const suggestions = this.generateImprovementSuggestions(service, overallScore, testTypeScores, riskLevel);
         
+        // Calculate total tests with proper null checks
+        const totalTests = Object.values(service.testTypes || {}).reduce((sum, type) => {
+            return sum + (type && typeof type.total === 'number' ? type.total : 0);
+        }, 0);
+
         return {
             overallScore,
             stabilityScore,
             coverageScore,
             riskLevel,
             testTypeScores,
-            totalTests: Object.values(service.testTypes).reduce((sum, type) => sum + type.total, 0),
+            totalTests: totalTests || 0,
+            totalRuns: service.totalRuns || 0,
+            recentRuns: service.recentRuns || 0,
             lastRunDate: service.lastRun ? new Date(service.lastRun).toLocaleDateString() : 'Never',
             suggestions
         };
@@ -718,14 +826,6 @@ class ExecutiveDashboard {
         ];
         
         switch (testType) {
-            case 'unit':
-                return [
-                    ...baseActions,
-                    'Mock external dependencies properly',
-                    'Test edge cases and boundary conditions',
-                    'Ensure tests are isolated and repeatable',
-                    'Add tests for error handling paths'
-                ];
             case 'api':
                 return [
                     ...baseActions,
@@ -750,6 +850,30 @@ class ExecutiveDashboard {
                     'Test responsive design',
                     'Validate user interaction flows'
                 ];
+            case 'contract':
+                return [
+                    ...baseActions,
+                    'Verify service contract definitions',
+                    'Check API schema compliance',
+                    'Validate data format consistency',
+                    'Test backward compatibility'
+                ];
+            case 'chaos':
+                return [
+                    ...baseActions,
+                    'Review chaos engineering scenarios',
+                    'Check system resilience patterns',
+                    'Verify failure recovery mechanisms',
+                    'Test circuit breaker implementations'
+                ];
+            case 'unit':
+                return [
+                    ...baseActions,
+                    'Mock external dependencies properly',
+                    'Test edge cases and boundary conditions',
+                    'Ensure tests are isolated and repeatable',
+                    'Add tests for error handling paths'
+                ];
             case 'system':
                 return [
                     ...baseActions,
@@ -757,6 +881,46 @@ class ExecutiveDashboard {
                     'Check system resource usage',
                     'Test under load conditions',
                     'Validate system integration points'
+                ];
+            case 'performance':
+                return [
+                    ...baseActions,
+                    'Profile application performance',
+                    'Check memory usage patterns',
+                    'Test under various load conditions',
+                    'Optimize database queries'
+                ];
+            case 'security':
+                return [
+                    ...baseActions,
+                    'Review authentication mechanisms',
+                    'Check authorization policies',
+                    'Test for common vulnerabilities',
+                    'Validate data encryption'
+                ];
+            case 'e2e':
+                return [
+                    ...baseActions,
+                    'Verify complete user journeys',
+                    'Check cross-browser compatibility',
+                    'Test real user scenarios',
+                    'Validate data flow end-to-end'
+                ];
+            case 'functional':
+                return [
+                    ...baseActions,
+                    'Test business logic functionality',
+                    'Verify feature requirements',
+                    'Check user workflows',
+                    'Validate expected behaviors'
+                ];
+            case 'acceptance':
+                return [
+                    ...baseActions,
+                    'Verify acceptance criteria',
+                    'Test user stories',
+                    'Check business requirements',
+                    'Validate stakeholder expectations'
                 ];
             default:
                 return baseActions;
@@ -772,13 +936,6 @@ class ExecutiveDashboard {
         ];
         
         switch (testType) {
-            case 'unit':
-                return [
-                    ...actions,
-                    'Reduce database calls in unit tests',
-                    'Use in-memory databases for testing',
-                    'Mock slow external services'
-                ];
             case 'api':
                 return [
                     ...actions,
@@ -800,6 +957,62 @@ class ExecutiveDashboard {
                     'Implement page object pattern',
                     'Reduce wait times with smart waits'
                 ];
+            case 'contract':
+                return [
+                    ...actions,
+                    'Optimize contract validation logic',
+                    'Cache contract schemas',
+                    'Use lightweight contract testing tools'
+                ];
+            case 'chaos':
+                return [
+                    ...actions,
+                    'Optimize chaos experiment setup',
+                    'Use containerized chaos tools',
+                    'Implement faster failure injection'
+                ];
+            case 'unit':
+                return [
+                    ...actions,
+                    'Reduce database calls in unit tests',
+                    'Use in-memory databases for testing',
+                    'Mock slow external services'
+                ];
+            case 'performance':
+                return [
+                    ...actions,
+                    'Use performance monitoring tools',
+                    'Implement load testing strategies',
+                    'Optimize test data generation'
+                ];
+            case 'security':
+                return [
+                    ...actions,
+                    'Use security testing frameworks',
+                    'Implement automated security scans',
+                    'Optimize vulnerability detection'
+                ];
+            case 'e2e':
+                return [
+                    ...actions,
+                    'Use headless browser automation',
+                    'Implement parallel test execution',
+                    'Optimize test data setup'
+                ];
+            case 'functional':
+                return [
+                    ...actions,
+                    'Use functional testing tools',
+                    'Implement test data management',
+                    'Optimize test execution flow'
+                ];
+            case 'acceptance':
+                return [
+                    ...actions,
+                    'Use BDD testing frameworks',
+                    'Implement acceptance test automation',
+                    'Optimize test scenario coverage'
+                ];
             default:
                 return actions;
         }
@@ -808,11 +1021,21 @@ class ExecutiveDashboard {
     // Get effort estimation for test type improvements
     getTestTypeEffort(testType) {
         const effortMap = {
-            'unit': 'Low',
+            // Core test types
             'api': 'Medium',
             'integration': 'High',
             'ui': 'High',
-            'system': 'Very High'
+            'contract': 'Medium',
+            'chaos': 'High',
+            
+            // Additional test types
+            'unit': 'Low',
+            'system': 'Very High',
+            'performance': 'High',
+            'security': 'High',
+            'e2e': 'Very High',
+            'functional': 'Medium',
+            'acceptance': 'Medium'
         };
         return effortMap[testType] || 'Medium';
     }
@@ -854,11 +1077,21 @@ class ExecutiveDashboard {
         
         // More realistic performance expectations for different test types
         const thresholds = {
-            'unit': 500,      // Unit tests should be fast (increased from 100ms)
-            'api': 1000,      // API tests can be moderately fast (increased from 500ms)
-            'integration': 3000, // Integration tests can be slower (increased from 2000ms)
-            'ui': 8000,       // UI tests are typically slowest (increased from 5000ms)
-            'system': 15000   // System tests can be very slow (increased from 10000ms)
+            // Core test types
+            'api': 1000,      // API tests can be moderately fast
+            'integration': 3000, // Integration tests can be slower
+            'ui': 8000,       // UI tests are typically slowest
+            'contract': 2000, // Contract tests should be reasonably fast
+            'chaos': 5000,    // Chaos tests can take time to inject failures
+            
+            // Additional test types
+            'unit': 500,      // Unit tests should be fast
+            'system': 15000,  // System tests can be very slow
+            'performance': 10000, // Performance tests can be slow
+            'security': 3000, // Security tests moderate speed
+            'e2e': 12000,     // End-to-end tests are slow
+            'functional': 4000, // Functional tests moderate speed
+            'acceptance': 5000  // Acceptance tests moderate speed
         };
 
         const threshold = thresholds[testType] || 2000;
@@ -882,8 +1115,11 @@ class ExecutiveDashboard {
     assessServiceRisk(service, overallScore) {
         const recentFailureRate = service.recentRuns > 0 ? (service.recentFailures / service.recentRuns) * 100 : 0;
         
-        if (overallScore < 60 || recentFailureRate > 30) return 'HIGH';
-        if (overallScore < 80 || recentFailureRate > 15) return 'MEDIUM';
+        // Convert 1-10 scale to percentage for comparison (1-10 scale, where 10 = 100%)
+        const scorePercentage = (overallScore / 10) * 100;
+        
+        if (scorePercentage < 60 || recentFailureRate > 30) return 'HIGH';
+        if (scorePercentage < 80 || recentFailureRate > 15) return 'MEDIUM';
         return 'LOW';
     }
 
@@ -1079,6 +1315,7 @@ class ExecutiveDashboard {
                     suggestion.classList.add('d-none');
                 }
             });
+            container.style.maxHeight = '200px';
             icon.className = 'fas fa-chevron-down';
             button.innerHTML = `<i class="fas fa-chevron-down" id="icon-${serviceName}"></i> Show ${allSuggestions.length - 3} more suggestions`;
         } else {
@@ -1086,6 +1323,7 @@ class ExecutiveDashboard {
             hiddenSuggestions.forEach(suggestion => {
                 suggestion.classList.remove('d-none');
             });
+            container.style.maxHeight = '400px';
             icon.className = 'fas fa-chevron-up';
             button.innerHTML = `<i class="fas fa-chevron-up" id="icon-${serviceName}"></i> Show less`;
         }
@@ -1093,11 +1331,22 @@ class ExecutiveDashboard {
 
     getTestTypeIcon(testType) {
         const icons = {
-            'unit': 'cube',
+            // Core test types
             'api': 'plug',
             'integration': 'link',
             'ui': 'desktop',
-            'system': 'cogs'
+            'contract': 'handshake',
+            'chaos': 'bolt',
+            
+            // Additional test types
+            'unit': 'cube',
+            'system': 'cogs',
+            'performance': 'tachometer-alt',
+            'security': 'shield-alt',
+            'e2e': 'route',
+            'functional': 'check-circle',
+            'acceptance': 'clipboard-check',
+            'unknown': 'question-circle'
         };
         return icons[testType] || 'question';
     }
@@ -1173,8 +1422,9 @@ class ExecutiveDashboard {
                 recentRuns: 37,
                 lastRunDate: new Date().toISOString().split('T')[0],
                 testTypeScores: {
-                    'unit': { score: 10, successRate: 95, totalTests: 120, avgDuration: 85 },
-                    'api': { score: 9, successRate: 88, totalTests: 65, avgDuration: 420 }
+                    'api': { score: 9, successRate: 88, totalTests: 65, avgDuration: 420 },
+                    'integration': { score: 10, successRate: 95, totalTests: 45, avgDuration: 1200 },
+                    'ui': { score: 8, successRate: 85, totalTests: 30, avgDuration: 3500 }
                 }
             },
             {
@@ -1189,8 +1439,10 @@ class ExecutiveDashboard {
                 recentRuns: 28,
                 lastRunDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Yesterday
                 testTypeScores: {
-                    'unit': { score: 9, successRate: 90, totalTests: 95, avgDuration: 95 },
-                    'api': { score: 8, successRate: 82, totalTests: 55, avgDuration: 580 }
+                    'api': { score: 8, successRate: 82, totalTests: 55, avgDuration: 580 },
+                    'integration': { score: 9, successRate: 90, totalTests: 40, avgDuration: 1500 },
+                    'ui': { score: 7, successRate: 75, totalTests: 25, avgDuration: 4000 },
+                    'contract': { score: 8, successRate: 80, totalTests: 20, avgDuration: 800 }
                 }
             },
             {
@@ -1205,8 +1457,10 @@ class ExecutiveDashboard {
                 recentRuns: 20,
                 lastRunDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 days ago
                 testTypeScores: {
-                    'unit': { score: 9, successRate: 85, totalTests: 80, avgDuration: 110 },
-                    'integration': { score: 7, successRate: 68, totalTests: 25, avgDuration: 2800 }
+                    'api': { score: 8, successRate: 80, totalTests: 50, avgDuration: 650 },
+                    'integration': { score: 7, successRate: 68, totalTests: 25, avgDuration: 2800 },
+                    'ui': { score: 6, successRate: 60, totalTests: 20, avgDuration: 4500 },
+                    'contract': { score: 7, successRate: 70, totalTests: 15, avgDuration: 1000 }
                 }
             },
             {
@@ -1221,9 +1475,11 @@ class ExecutiveDashboard {
                 recentRuns: 18,
                 lastRunDate: new Date().toISOString().split('T')[0], // Today
                 testTypeScores: {
-                    'unit': { score: 10, successRate: 98, totalTests: 60, avgDuration: 75 },
                     'api': { score: 9, successRate: 92, totalTests: 25, avgDuration: 380 },
-                    'integration': { score: 9, successRate: 88, totalTests: 13, avgDuration: 1650 }
+                    'integration': { score: 9, successRate: 88, totalTests: 13, avgDuration: 1650 },
+                    'ui': { score: 10, successRate: 98, totalTests: 20, avgDuration: 3200 },
+                    'contract': { score: 9, successRate: 90, totalTests: 15, avgDuration: 900 },
+                    'chaos': { score: 8, successRate: 85, totalTests: 10, avgDuration: 4200 }
                 }
             },
             {
@@ -1238,9 +1494,11 @@ class ExecutiveDashboard {
                 recentRuns: 12,
                 lastRunDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 days ago
                 testTypeScores: {
-                    'unit': { score: 7, successRate: 70, totalTests: 30, avgDuration: 150 },
                     'api': { score: 6, successRate: 65, totalTests: 20, avgDuration: 800 },
-                    'system': { score: 5, successRate: 55, totalTests: 8, avgDuration: 15000 }
+                    'integration': { score: 5, successRate: 55, totalTests: 15, avgDuration: 2000 },
+                    'ui': { score: 6, successRate: 60, totalTests: 12, avgDuration: 5000 },
+                    'contract': { score: 5, successRate: 50, totalTests: 8, avgDuration: 1200 },
+                    'chaos': { score: 4, successRate: 45, totalTests: 5, avgDuration: 6000 }
                 }
             }
         ];
@@ -1568,15 +1826,15 @@ class ExecutiveDashboard {
     // 3. PR Quality Insights
     async loadQualityInsights() {
         try {
-            // Calculate date range for last 3 months
-            const threeMonthsAgo = new Date();
-            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-            const threeMonthsAgoISO = threeMonthsAgo.toISOString();
+            // Calculate date range for last 2 months
+            const twoMonthsAgo = new Date();
+            twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+            const twoMonthsAgoISO = twoMonthsAgo.toISOString();
 
-            // Fetch all test results with pagination - last 3 months
+            // Fetch all test results with pagination - last 2 months
             const testResults = await this.fetchAllRecords('test_result', {
                 select: `id, status, duration_ms, created_at, test_case(name, tags), test_run(test_suite(name, project(name)))`,
-                filter: { column: 'created_at', operator: 'gte', value: threeMonthsAgoISO },
+                filter: { column: 'created_at', operator: 'gte', value: twoMonthsAgoISO },
                 orderBy: { column: 'created_at', ascending: false }
             });
 
@@ -1745,15 +2003,15 @@ class ExecutiveDashboard {
     // 4. Anomaly Detection
     async loadAnomalyDetection() {
         try {
-            // Calculate date range for last 3 months
-            const threeMonthsAgo = new Date();
-            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-            const threeMonthsAgoISO = threeMonthsAgo.toISOString();
+            // Calculate date range for last 2 months
+            const twoMonthsAgo = new Date();
+            twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+            const twoMonthsAgoISO = twoMonthsAgo.toISOString();
 
-            // Fetch all test data for anomaly detection with pagination - last 3 months
+            // Fetch all test data for anomaly detection with pagination - last 2 months
             const testResults = await this.fetchAllRecords('test_result', {
                 select: `id, status, duration_ms, created_at, test_case(name), test_run(test_suite(name, project(name)))`,
-                filter: { column: 'created_at', operator: 'gte', value: threeMonthsAgoISO },
+                filter: { column: 'created_at', operator: 'gte', value: twoMonthsAgoISO },
                 orderBy: { column: 'created_at', ascending: false }
             });
 

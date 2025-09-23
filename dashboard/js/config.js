@@ -9,7 +9,7 @@ export const CONFIG = {
     // Data Configuration
     DATA: {
         TIME_RANGE_MONTHS: 3,
-        PAGE_SIZE: 1000,
+        PAGE_SIZE: 10000, // Increased from 1000 to fetch more records per page
         AUTO_REFRESH_INTERVAL: 300000 // 5 minutes
     },
 
