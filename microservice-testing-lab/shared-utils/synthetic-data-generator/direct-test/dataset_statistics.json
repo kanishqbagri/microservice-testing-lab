@@ -1,0 +1,55 @@
+{
+  "dataset_summary": {
+    "total_pull_requests": 50,
+    "total_system_runs": 100,
+    "total_service_metrics": 500,
+    "total_ecommerce_flows": 3218
+  },
+  "performance_regression_stats": {
+    "prs_with_performance_regression": 12,
+    "runs_with_performance_regression": 19,
+    "pr_regression_rate": 24.00%,
+    "run_regression_rate": 19.00%
+  },
+  "anomaly_stats": {
+    "anomalous_runs": 7,
+    "anomalous_metrics": 71,
+    "anomalous_flows": 332,
+    "run_anomaly_rate": 7.00%,
+    "metric_anomaly_rate": 14.20%,
+    "flow_anomaly_rate": 10.32%
+  },
+  "ecommerce_stats": {
+    "converted_flows": 915,
+    "high_value_flows": 2940,
+    "conversion_rate": 28.43%,
+    "high_value_rate": 91.36%
+  },
+  "service_stats": {
+    "gateway_service": {
+      "total_metrics": 100,
+      "avg_success_rate": 0.891,
+      "avg_response_time": 414.45
+    },
+    "product_service": {
+      "total_metrics": 100,
+      "avg_success_rate": 0.909,
+      "avg_response_time": 444.56
+    },
+    "order_service": {
+      "total_metrics": 100,
+      "avg_success_rate": 0.905,
+      "avg_response_time": 431.70
+    },
+    "user_service": {
+      "total_metrics": 100,
+      "avg_success_rate": 0.899,
+      "avg_response_time": 406.32
+    },
+    "notification_service": {
+      "total_metrics": 100,
+      "avg_success_rate": 0.901,
+      "avg_response_time": 427.09
+    }
+  }
+}

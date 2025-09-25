@@ -72,11 +72,11 @@ export class MetricsCalculator {
             testType.runs.forEach(run => {
                 const runDate = new Date(run.started_at);
                 overallTotal++;
-                if (run.status === 'FAILED') overallFailures++;
+                if (run.status === 'FAIL') overallFailures++;
                 
                 if (runDate >= lastWeek) {
                     recentTotal++;
-                    if (run.status === 'FAILED') recentFailures++;
+                    if (run.status === 'FAIL') recentFailures++;
                 }
             });
         });
@@ -124,7 +124,7 @@ export class MetricsCalculator {
                 const runDate = new Date(run.started_at);
                 if (runDate >= lastWeek) {
                     recentTotal++;
-                    if (run.status === 'FAILED') recentFailures++;
+                    if (run.status === 'FAIL') recentFailures++;
                 }
             });
         });

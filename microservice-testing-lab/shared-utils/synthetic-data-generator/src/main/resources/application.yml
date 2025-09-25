@@ -1,0 +1,97 @@
+spring:
+  application:
+    name: synthetic-data-generator
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/synthetic_data
+    username: ${DB_USERNAME:synthetic_user}
+    password: ${DB_PASSWORD:synthetic_pass}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+  
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema.sql
+      data-locations: classpath:db/data.sql
+
+synthetic:
+  data:
+    generation:
+      default-pr-count: 1000
+      default-runs-per-pr: 5
+      default-flows-per-run: 30
+      default-steps-per-flow: 8
+      enable-parallel-generation: true
+      batch-size: 100
+    
+    performance:
+      baseline-response-time-ms: 200.0
+      max-response-time-ms: 5000.0
+      baseline-success-rate: 0.95
+      min-success-rate: 0.7
+      baseline-cpu-usage: 0.3
+      max-cpu-usage: 0.9
+      baseline-memory-usage: 0.4
+      max-memory-usage: 0.8
+    
+    ecommerce:
+      conversion-rate: 0.3
+      cart-abandonment-rate: 0.7
+      payment-success-rate: 0.95
+      average-cart-value: 150.0
+      max-cart-value: 2000.0
+      average-items-per-cart: 3
+      max-items-per-cart: 15
+      flow-type-success-rates:
+        PRODUCT_BROWSE: 0.98
+        ADD_TO_CART: 0.95
+        CHECKOUT: 0.85
+        PAYMENT: 0.92
+        ORDER_CONFIRMATION: 0.99
+    
+    noise:
+      performance-regression-rate: 0.2  # 20% of PRs lead to degraded performance
+      anomaly-rate: 0.1                 # 10% of runs are anomalous
+      failure-rate: 0.05                # 5% base failure rate
+      security-vulnerability-rate: 0.05 # 5% of PRs have security issues
+      breaking-change-rate: 0.1         # 10% of PRs have breaking changes
+      service-failure-rates:
+        gateway-service: 0.02
+        user-service: 0.03
+        product-service: 0.025
+        order-service: 0.04
+        notification-service: 0.035
+      error-type-probabilities:
+        TIMEOUT: 0.3
+        VALIDATION_ERROR: 0.25
+        SERVICE_UNAVAILABLE: 0.2
+        AUTHENTICATION_ERROR: 0.15
+        RATE_LIMIT_EXCEEDED: 0.1
+
+logging:
+  level:
+    com.kb.synthetic: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

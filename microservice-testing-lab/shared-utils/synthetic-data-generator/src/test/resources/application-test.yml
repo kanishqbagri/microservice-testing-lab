@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    open-in-view: false
+  
+  h2:
+    console:
+      enabled: true
+
+synthetic:
+  data:
+    generation:
+      default-pr-count: 10
+      default-runs-per-pr: 2
+      default-flows-per-run: 5
+      default-steps-per-flow: 3
+      enable-parallel-generation: false
+      batch-size: 10
+
+logging:
+  level:
+    com.kb.synthetic: DEBUG
+    org.springframework: WARN
+    org.hibernate: WARN
