@@ -1,0 +1,18 @@
+{
+  "health_score": 0.17954660765440025,
+  "total_requests": 0.16025967677839947,
+  "cpu_usage_percent": 0.20347166656511378,
+  "memory_usage_percent": 0.12316654529132168,
+  "disk_usage_percent": 0.10379951271719619,
+  "network_in_mbps": 0.017589812311178957,
+  "network_out_mbps": 0.21345958253004804,
+  "upstream_dependencies": 0.20248052834974656,
+  "downstream_dependencies": 0.06680015091923809,
+  "dependency_health_score": 0.22594035766143167,
+  "success_rate": 0.17266621373889401,
+  "error_rate": 0.15780229572601367,
+  "avg_response_time_ms": 0.05198774338229687,
+  "p95_response_time_ms": 0.034730092995857796,
+  "p99_response_time_ms": 0.11035829618103432,
+  "throughput_rps": 0.11865446568262251
+}

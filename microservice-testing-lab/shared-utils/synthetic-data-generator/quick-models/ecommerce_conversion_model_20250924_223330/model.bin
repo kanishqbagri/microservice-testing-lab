@@ -1,0 +1,7 @@
+MODEL_BINARY_DATA
+Model: E-commerce Conversion Prediction
+Type: XGBoost
+Version: 1.0.0
+Size: 8.9 MB
+Created: 2025-09-24T22:33:30.395869
+Status: TRAINED

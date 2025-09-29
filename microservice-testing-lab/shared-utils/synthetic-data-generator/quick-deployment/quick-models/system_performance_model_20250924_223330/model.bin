@@ -1,0 +1,7 @@
+MODEL_BINARY_DATA
+Model: System Performance Prediction
+Type: GradientBoosting
+Version: 1.0.0
+Size: 9.5 MB
+Created: 2025-09-24T22:33:30.393100
+Status: TRAINED

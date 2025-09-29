@@ -1,0 +1,14 @@
+{
+  "pr_lines_added": 0.01031315841655851,
+  "pr_test_coverage": 0.05232765412852257,
+  "pr_complexity": 0.042624633918529276,
+  "pr_risk_score": 0.15392708031722876,
+  "run_load_intensity": 0.1379273589151489,
+  "run_total_requests": 0.07402545685330701,
+  "service_health_score": 0.16321169900838337,
+  "service_cpu_usage": 0.11412327696787714,
+  "service_memory_usage": 0.011518470344046303,
+  "service_dependencies": 0.19931218029909775,
+  "service_success_rate": 0.2478731203455814,
+  "service_response_time": 0.14189696588210832
+}

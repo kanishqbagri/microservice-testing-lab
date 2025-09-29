@@ -1,0 +1,71 @@
+{
+  "model_serving": {
+    "endpoints": {
+      "pr_impact": {
+        "path": "/api/v1/predict/pr-impact",
+        "method": "POST",
+        "model": "pr_impact_model",
+        "input_schema": {
+          "lines_added": "integer",
+          "test_coverage": "float",
+          "code_complexity": "float",
+          "risk_score": "float"
+        }
+      },
+      "system_performance": {
+        "path": "/api/v1/predict/system-performance",
+        "method": "POST",
+        "model": "system_performance_model",
+        "input_schema": {
+          "load_intensity": "float",
+          "cpu_usage": "float",
+          "memory_usage": "float",
+          "response_time": "float"
+        }
+      },
+      "service_health": {
+        "path": "/api/v1/predict/service-health",
+        "method": "POST",
+        "model": "service_health_model",
+        "input_schema": {
+          "cpu_usage_percent": "float",
+          "memory_usage_percent": "float",
+          "error_rate": "float",
+          "response_time_ms": "float"
+        }
+      },
+      "ecommerce_conversion": {
+        "path": "/api/v1/predict/ecommerce-conversion",
+        "method": "POST",
+        "model": "ecommerce_conversion_model",
+        "input_schema": {
+          "cart_value": "float",
+          "session_duration_minutes": "float",
+          "items_in_cart": "integer",
+          "success_rate": "float"
+        }
+      },
+      "anomaly_detection": {
+        "path": "/api/v1/predict/anomaly-detection",
+        "method": "POST",
+        "model": "anomaly_detection_model",
+        "input_schema": {
+          "cpu_usage_percent": "float",
+          "memory_usage_percent": "float",
+          "error_rate": "float",
+          "response_time_ms": "float"
+        }
+      }
+    },
+    "monitoring": {
+      "metrics_enabled": true,
+      "logging_enabled": true,
+      "health_check_interval": 30
+    },
+    "scaling": {
+      "min_replicas": 2,
+      "max_replicas": 10,
+      "target_cpu_utilization": 70
+    }
+  }
+}

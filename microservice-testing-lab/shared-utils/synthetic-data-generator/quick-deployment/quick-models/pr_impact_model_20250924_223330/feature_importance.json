@@ -1,0 +1,12 @@
+{
+  "lines_added": 0.19307896105313163,
+  "lines_deleted": 0.0915636358725459,
+  "test_coverage": 0.131911648993654,
+  "code_complexity": 0.08092576441559497,
+  "cyclomatic_complexity": 0.05296055897982401,
+  "affected_services_count": 0.10517239712592077,
+  "change_types_count": 0.07550126320248488,
+  "has_breaking_change": 0.18228690059066627,
+  "has_security_vulnerability": 0.05263036509341375,
+  "risk_score": 0.18352323351516947
+}

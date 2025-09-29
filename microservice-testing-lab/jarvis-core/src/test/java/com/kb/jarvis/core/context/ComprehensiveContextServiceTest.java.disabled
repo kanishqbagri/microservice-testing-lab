@@ -1,0 +1,190 @@
+package com.kb.jarvis.core.context;
+
+import com.kb.jarvis.core.model.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+/**
+ * Test class for ComprehensiveContextService
+ */
+@ExtendWith(MockitoExtension.class)
+class ComprehensiveContextServiceTest {
+    
+    @Mock
+    private EnhancedNLPEngine enhancedNLPEngine;
+    
+    @Mock
+    private ContextMappingService contextMappingService;
+    
+    @Mock
+    private DependencyAnalysisService dependencyAnalysisService;
+    
+    @InjectMocks
+    private ComprehensiveContextService comprehensiveContextService;
+    
+    @BeforeEach
+    void setUp() {
+        // Setup mock responses
+        when(enhancedNLPEngine.parseCommand(any(String.class)))
+            .thenReturn(createMockParsedCommand());
+        
+        when(dependencyAnalysisService.analyzeDependencies(any(), any(), any()))
+            .thenReturn(createMockDependencyGraph());
+    }
+    
+    @Test
+    void testAnalyzeSimpleCommand() {
+        // Given
+        String command = "Run unit tests for user service";
+        
+        // When
+        ComprehensiveContext context = comprehensiveContextService.analyzeCommand(command);
+        
+        // Then
+        assertNotNull(context);
+        assertEquals(command, context.getCommand());
+        assertNotNull(context.getTestTypes());
+        assertNotNull(context.getServices());
+        assertNotNull(context.getActions());
+        assertNotNull(context.getDependencies());
+        assertNotNull(context.getExecutionPlan());
+        assertNotNull(context.getRiskAssessment());
+        assertNotNull(context.getResourceRequirements());
+        assertTrue(context.getConfidence() >= 0.0 && context.getConfidence() <= 1.0);
+    }
+    
+    @Test
+    void testAnalyzeMultiServiceCommand() {
+        // Given
+        String command = "Run unit and integration tests for user and order services";
+        
+        // When
+        ComprehensiveContext context = comprehensiveContextService.analyzeCommand(command);
+        
+        // Then
+        assertNotNull(context);
+        assertEquals(command, context.getCommand());
+        assertTrue(context.getServices().size() >= 2);
+        assertTrue(context.getTestTypes().size() >= 2);
+        assertNotNull(context.getExecutionPlan());
+        assertTrue(context.getExecutionPlan().getSteps().size() > 0);
+    }
+    
+    @Test
+    void testAnalyzeChaosCommand() {
+        // Given
+        String command = "Run chaos tests on order service";
+        
+        // When
+        ComprehensiveContext context = comprehensiveContextService.analyzeCommand(command);
+        
+        // Then
+        assertNotNull(context);
+        assertEquals(command, context.getCommand());
+        assertTrue(context.getTestTypes().contains(TestType.CHAOS_TEST));
+        assertTrue(context.getServices().contains("order-service"));
+        assertNotNull(context.getRiskAssessment());
+        assertNotNull(context.getDependencies());
+    }
+    
+    @Test
+    void testAnalyzePerformanceCommand() {
+        // Given
+        String command = "Run performance tests on all services";
+        
+        // When
+        ComprehensiveContext context = comprehensiveContextService.analyzeCommand(command);
+        
+        // Then
+        assertNotNull(context);
+        assertEquals(command, context.getCommand());
+        assertTrue(context.getTestTypes().contains(TestType.PERFORMANCE_TEST));
+        assertTrue(context.getServices().size() >= 5); // All services
+        assertNotNull(context.getResourceRequirements());
+        assertEquals("HIGH", context.getResourceRequirements().getCpuRequirements());
+    }
+    
+    @Test
+    void testAnalyzeSecurityCommand() {
+        // Given
+        String command = "Run security tests on user service";
+        
+        // When
+        ComprehensiveContext context = comprehensiveContextService.analyzeCommand(command);
+        
+        // Then
+        assertNotNull(context);
+        assertEquals(command, context.getCommand());
+        assertTrue(context.getTestTypes().contains(TestType.SECURITY_TEST));
+        assertTrue(context.getServices().contains("user-service"));
+        assertNotNull(context.getRiskAssessment());
+    }
+    
+    @Test
+    void testAnalyzeEmptyCommand() {
+        // Given
+        String command = "";
+        
+        // When
+        ComprehensiveContext context = comprehensiveContextService.analyzeCommand(command);
+        
+        // Then
+        assertNotNull(context);
+        assertEquals(command, context.getCommand());
+        assertEquals(0.0, context.getConfidence());
+        assertNotNull(context.getWarnings());
+    }
+    
+    @Test
+    void testAnalyzeInvalidCommand() {
+        // Given
+        String command = "Invalid command with no recognizable patterns";
+        
+        // When
+        ComprehensiveContext context = comprehensiveContextService.analyzeCommand(command);
+        
+        // Then
+        assertNotNull(context);
+        assertEquals(command, context.getCommand());
+        // Should still provide fallback analysis
+        assertNotNull(context.getTestTypes());
+        assertNotNull(context.getServices());
+        assertNotNull(context.getActions());
+    }
+    
+    // Helper methods to create mock objects
+    private ParsedCommand createMockParsedCommand() {
+        return ParsedCommand.builder()
+            .originalCommand("test command")
+            .intents(Arrays.asList(IntentType.RUN_TESTS))
+            .services(Arrays.asList("user-service"))
+            .testTypes(Arrays.asList(TestType.UNIT_TEST))
+            .parameters(java.util.Map.of("timeout", "300s"))
+            .confidence(0.9)
+            .build();
+    }
+    
+    private DependencyGraph createMockDependencyGraph() {
+        return DependencyGraph.builder()
+            .affectedServices(Arrays.asList("user-service"))
+            .dependencies(java.util.Map.of("user-service", Arrays.asList("users-db")))
+            .blastRadius(1)
+            .severityLevel("LOW")
+            .criticalPath(Arrays.asList("user-service"))
+            .impactAnalysis(java.util.Map.of("impactScore", 0.2))
+            .isolationPoints(Arrays.asList())
+            .riskFactors(java.util.Map.of("overallRisk", "LOW"))
+            .build();
+    }
+}

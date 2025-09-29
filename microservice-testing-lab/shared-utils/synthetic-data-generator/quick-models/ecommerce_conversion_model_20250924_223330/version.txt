@@ -1,0 +1,7 @@
+Model: E-commerce Conversion Prediction
+Version: 1.0.0
+Type: XGBoost
+Created: 2025-09-24T22:33:30.395869
+Status: Production Ready
+Accuracy: 0.902
+F1 Score: 0.813

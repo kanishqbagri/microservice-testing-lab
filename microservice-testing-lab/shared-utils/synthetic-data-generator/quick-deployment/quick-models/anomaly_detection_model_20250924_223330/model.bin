@@ -1,0 +1,7 @@
+MODEL_BINARY_DATA
+Model: Anomaly Detection
+Type: IsolationForest
+Version: 1.0.0
+Size: 4.6 MB
+Created: 2025-09-24T22:33:30.397528
+Status: TRAINED

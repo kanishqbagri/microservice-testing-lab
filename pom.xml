@@ -23,11 +23,12 @@
     </properties>
     
     <modules>
-        <module>user-service</module>
-        <module>product-service</module>
-        <module>order-service</module>
-        <module>gateway-service</module>
-        <module>notification-service</module>
+        <module>microservices/user-service</module>
+        <module>microservices/product-service</module>
+        <module>microservices/order-service</module>
+        <module>microservices/gateway-service</module>
+        <module>microservices/notification-service</module>
+        <module>microservice-testing-lab</module>
     </modules>
     
     <build>

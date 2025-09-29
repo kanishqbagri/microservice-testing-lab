@@ -1,0 +1,7 @@
+MODEL_BINARY_DATA
+Model: Service Health Prediction
+Type: NeuralNetwork
+Version: 1.0.0
+Size: 16.0 MB
+Created: 2025-09-24T22:33:30.394575
+Status: TRAINED

@@ -1,0 +1,17 @@
+{
+  "session_duration_minutes": 0.23877227909866552,
+  "items_in_cart": 0.10793610049222728,
+  "cart_value": 0.12648760108389454,
+  "total_steps": 0.17714430695117286,
+  "successful_steps": 0.1185584666743738,
+  "failed_steps": 0.2010033144822956,
+  "success_rate": 0.22949050589489087,
+  "total_duration_ms": 0.16192455923993493,
+  "avg_step_duration_ms": 0.13510771537275065,
+  "payment_method": 0.011386189976903936,
+  "user_segment": 0.17752144731815095,
+  "device_type": 0.08928946191241169,
+  "browser_type": 0.06294765944433846,
+  "location": 0.17138905246050162,
+  "abandonment_probability": 0.1851850765251742
+}

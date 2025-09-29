@@ -1,0 +1,7 @@
+Model: Anomaly Detection
+Version: 1.0.0
+Type: IsolationForest
+Created: 2025-09-24T22:33:30.397528
+Status: Production Ready
+Accuracy: 0.872
+F1 Score: 0.777

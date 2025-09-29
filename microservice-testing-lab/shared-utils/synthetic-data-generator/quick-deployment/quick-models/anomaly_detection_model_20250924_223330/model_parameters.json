@@ -1,0 +1,6 @@
+{
+  "max_samples": "auto",
+  "n_estimators": 100,
+  "random_state": 42,
+  "contamination": 0.1
+}

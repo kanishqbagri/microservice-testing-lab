@@ -1,0 +1,182 @@
+package com.kb.jarvis.core.context;
+
+import com.kb.jarvis.core.model.*;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Phase 1 Integration Test
+ * Tests the comprehensive context understanding framework
+ */
+@SpringBootTest
+@ActiveProfiles("test")
+class Phase1IntegrationTest {
+    
+    @Autowired
+    private ComprehensiveContextService comprehensiveContextService;
+    
+    @Test
+    void testSimpleCommandAnalysis() {
+        // Given
+        String command = "Run unit tests for user service";
+        
+        // When
+        ComprehensiveContext context = comprehensiveContextService.analyzeCommand(command);
+        
+        // Then
+        assertNotNull(context);
+        assertEquals(command, context.getCommand());
+        assertNotNull(context.getTestTypes());
+        assertNotNull(context.getServices());
+        assertNotNull(context.getActions());
+        assertNotNull(context.getDependencies());
+        assertNotNull(context.getExecutionPlan());
+        assertNotNull(context.getRiskAssessment());
+        assertNotNull(context.getResourceRequirements());
+        assertTrue(context.getConfidence() >= 0.0 && context.getConfidence() <= 1.0);
+        
+        // Verify basic analysis results
+        assertFalse(context.getTestTypes().isEmpty());
+        assertFalse(context.getServices().isEmpty());
+        assertFalse(context.getActions().isEmpty());
+        
+        System.out.println("✅ Simple Command Analysis Test Passed");
+        System.out.println("  - Test Types: " + context.getTestTypes());
+        System.out.println("  - Services: " + context.getServices());
+        System.out.println("  - Actions: " + context.getActions());
+        System.out.println("  - Confidence: " + context.getConfidence());
+    }
+    
+    @Test
+    void testMultiServiceCommandAnalysis() {
+        // Given
+        String command = "Run unit and integration tests for user and order services";
+        
+        // When
+        ComprehensiveContext context = comprehensiveContextService.analyzeCommand(command);
+        
+        // Then
+        assertNotNull(context);
+        assertEquals(command, context.getCommand());
+        assertTrue(context.getServices().size() >= 2);
+        assertTrue(context.getTestTypes().size() >= 2);
+        assertNotNull(context.getExecutionPlan());
+        assertTrue(context.getExecutionPlan().getSteps().size() > 0);
+        
+        System.out.println("✅ Multi-Service Command Analysis Test Passed");
+        System.out.println("  - Test Types: " + context.getTestTypes());
+        System.out.println("  - Services: " + context.getServices());
+        System.out.println("  - Execution Steps: " + context.getExecutionPlan().getSteps().size());
+    }
+    
+    @Test
+    void testChaosCommandAnalysis() {
+        // Given
+        String command = "Run chaos tests on order service";
+        
+        // When
+        ComprehensiveContext context = comprehensiveContextService.analyzeCommand(command);
+        
+        // Then
+        assertNotNull(context);
+        assertEquals(command, context.getCommand());
+        assertTrue(context.getTestTypes().contains(TestType.CHAOS_TEST));
+        assertTrue(context.getServices().contains("order-service"));
+        assertNotNull(context.getRiskAssessment());
+        assertNotNull(context.getDependencies());
+        
+        System.out.println("✅ Chaos Command Analysis Test Passed");
+        System.out.println("  - Test Types: " + context.getTestTypes());
+        System.out.println("  - Services: " + context.getServices());
+        System.out.println("  - Risk Level: " + context.getRiskAssessment().getOverallRiskLevel());
+        System.out.println("  - Blast Radius: " + context.getDependencies().getBlastRadius());
+    }
+    
+    @Test
+    void testPerformanceCommandAnalysis() {
+        // Given
+        String command = "Run performance tests on all services";
+        
+        // When
+        ComprehensiveContext context = comprehensiveContextService.analyzeCommand(command);
+        
+        // Then
+        assertNotNull(context);
+        assertEquals(command, context.getCommand());
+        assertTrue(context.getTestTypes().contains(TestType.PERFORMANCE_TEST));
+        assertTrue(context.getServices().size() >= 5); // All services
+        assertNotNull(context.getResourceRequirements());
+        assertEquals("HIGH", context.getResourceRequirements().getCpuRequirements());
+        
+        System.out.println("✅ Performance Command Analysis Test Passed");
+        System.out.println("  - Test Types: " + context.getTestTypes());
+        System.out.println("  - Services: " + context.getServices());
+        System.out.println("  - CPU Requirements: " + context.getResourceRequirements().getCpuRequirements());
+    }
+    
+    @Test
+    void testSecurityCommandAnalysis() {
+        // Given
+        String command = "Run security tests on user service";
+        
+        // When
+        ComprehensiveContext context = comprehensiveContextService.analyzeCommand(command);
+        
+        // Then
+        assertNotNull(context);
+        assertEquals(command, context.getCommand());
+        assertTrue(context.getTestTypes().contains(TestType.SECURITY_TEST));
+        assertTrue(context.getServices().contains("user-service"));
+        assertNotNull(context.getRiskAssessment());
+        
+        System.out.println("✅ Security Command Analysis Test Passed");
+        System.out.println("  - Test Types: " + context.getTestTypes());
+        System.out.println("  - Services: " + context.getServices());
+        System.out.println("  - Risk Level: " + context.getRiskAssessment().getOverallRiskLevel());
+    }
+    
+    @Test
+    void testEmptyCommandHandling() {
+        // Given
+        String command = "";
+        
+        // When
+        ComprehensiveContext context = comprehensiveContextService.analyzeCommand(command);
+        
+        // Then
+        assertNotNull(context);
+        assertEquals(command, context.getCommand());
+        assertEquals(0.0, context.getConfidence());
+        assertNotNull(context.getWarnings());
+        
+        System.out.println("✅ Empty Command Handling Test Passed");
+        System.out.println("  - Confidence: " + context.getConfidence());
+        System.out.println("  - Warnings: " + context.getWarnings());
+    }
+    
+    @Test
+    void testInvalidCommandHandling() {
+        // Given
+        String command = "Invalid command with no recognizable patterns";
+        
+        // When
+        ComprehensiveContext context = comprehensiveContextService.analyzeCommand(command);
+        
+        // Then
+        assertNotNull(context);
+        assertEquals(command, context.getCommand());
+        // Should still provide fallback analysis
+        assertNotNull(context.getTestTypes());
+        assertNotNull(context.getServices());
+        assertNotNull(context.getActions());
+        
+        System.out.println("✅ Invalid Command Handling Test Passed");
+        System.out.println("  - Test Types: " + context.getTestTypes());
+        System.out.println("  - Services: " + context.getServices());
+        System.out.println("  - Actions: " + context.getActions());
+    }
+}

@@ -1,0 +1,71 @@
+{
+  "registry_version": "1.0.0",
+  "created_at": "2025-09-24T22:33:30.399026",
+  "total_models": 5,
+  "models": [
+    {
+      "model_name": "PR Impact Prediction",
+      "model_type": "RandomForest",
+      "version": "1.0.0",
+      "accuracy": 0.8551764434636703,
+      "f1_score": 0.8388649856821431,
+      "training_data_size": 50000,
+      "model_size_mb": 10.245051859479222,
+      "created_at": "2025-09-24T22:33:30.378924",
+      "status": "production_ready"
+    },
+    {
+      "model_name": "System Performance Prediction",
+      "model_type": "GradientBoosting",
+      "version": "1.0.0",
+      "accuracy": 0.9094877692153058,
+      "f1_score": 0.8021854596865133,
+      "training_data_size": 500000,
+      "model_size_mb": 9.545571608231446,
+      "created_at": "2025-09-24T22:33:30.393100",
+      "status": "production_ready"
+    },
+    {
+      "model_name": "Service Health Prediction",
+      "model_type": "NeuralNetwork",
+      "version": "1.0.0",
+      "accuracy": 0.918159493567557,
+      "f1_score": 0.8473609535462743,
+      "training_data_size": 2500000,
+      "model_size_mb": 15.997406184505168,
+      "created_at": "2025-09-24T22:33:30.394575",
+      "status": "production_ready"
+    },
+    {
+      "model_name": "E-commerce Conversion Prediction",
+      "model_type": "XGBoost",
+      "version": "1.0.0",
+      "accuracy": 0.9016481388455576,
+      "f1_score": 0.8125609341609911,
+      "training_data_size": 1750000,
+      "model_size_mb": 8.851591094298392,
+      "created_at": "2025-09-24T22:33:30.395869",
+      "status": "production_ready"
+    },
+    {
+      "model_name": "Anomaly Detection",
+      "model_type": "IsolationForest",
+      "version": "1.0.0",
+      "accuracy": 0.8724225413451191,
+      "f1_score": 0.7773895044084715,
+      "training_data_size": 1500000,
+      "model_size_mb": 4.603723421921939,
+      "created_at": "2025-09-24T22:33:30.397528",
+      "status": "production_ready"
+    }
+  ],
+  "deployment_info": {
+    "environment": "production",
+    "kubernetes_namespace": "ml-models",
+    "replicas": 3,
+    "resources": {
+      "cpu": "1000m",
+      "memory": "2Gi"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "model_name": "PR Impact Prediction",
+  "model_type": "RandomForest",
+  "version": "1.0.0",
+  "target_variable": "has_performance_regression",
+  "features": [lines_added, lines_deleted, test_coverage, code_complexity, cyclomatic_complexity, affected_services_count, change_types_count, has_breaking_change, has_security_vulnerability, risk_score],
+  "accuracy": 0.855,
+  "precision": 0.858,
+  "recall": 0.770,
+  "f1_score": 0.839,
+  "training_data_size": 50000,
+  "training_time_seconds": 88.4,
+  "model_size_mb": 10.2,
+  "created_at": "2025-09-24T22:33:30.378924",
+  "status": "trained"
+}

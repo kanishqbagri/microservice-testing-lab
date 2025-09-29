@@ -1,0 +1,7 @@
+MODEL_BINARY_DATA
+Model: PR Impact Prediction
+Type: RandomForest
+Version: 1.0.0
+Size: 10.2 MB
+Created: 2025-09-24T22:33:30.378924
+Status: TRAINED
