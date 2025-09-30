@@ -500,7 +500,14 @@ public class EnhancedNLPEngine {
     }
     
     private boolean containsPattern(String text, String pattern) {
-        return text.matches(".*" + pattern.replace(" ", ".*") + ".*");
+        // Split pattern by | and check if any part is contained in text
+        String[] patterns = pattern.split("\\|");
+        for (String p : patterns) {
+            if (text.contains(p.trim())) {
+                return true;
+            }
+        }
+        return false;
     }
     
     private ParsedCommand createErrorParsedCommand(String command, String errorMessage) {

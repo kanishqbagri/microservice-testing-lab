@@ -1,7 +1,7 @@
 package com.kb.jarvis.core.context;
 
 import com.kb.jarvis.core.model.*;
-import com.kb.jarvis.core.ai.EnhancedAIEngine;
+import com.kb.jarvis.core.nlp.EnhancedNLPEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +20,7 @@ public class ComprehensiveContextService {
     private static final Logger log = LoggerFactory.getLogger(ComprehensiveContextService.class);
     
     @Autowired
-    private EnhancedAIEngine enhancedAIEngine;
+    private EnhancedNLPEngine enhancedNLPEngine;
     
     @Autowired
     private ContextMappingService contextMappingService;
@@ -49,7 +49,7 @@ public class ComprehensiveContextService {
         
         try {
             // 1. Parse command using enhanced NLP
-            ParsedCommand parsed = enhancedAIEngine.parseCommand(command);
+            ParsedCommand parsed = enhancedNLPEngine.parseCommand(command);
             log.debug("Parsed command: {}", parsed);
             
             // 2. Identify all test types mentioned

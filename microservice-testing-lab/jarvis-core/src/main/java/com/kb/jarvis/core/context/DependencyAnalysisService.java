@@ -204,7 +204,9 @@ public class DependencyAnalysisService {
         }
         
         // Add dependencies of critical services
-        for (String service : criticalPath) {
+        // Create a copy to avoid ConcurrentModificationException
+        List<String> servicesToProcess = new ArrayList<>(criticalPath);
+        for (String service : servicesToProcess) {
             List<String> deps = dependencies.get(service);
             if (deps != null) {
                 for (String dep : deps) {
