@@ -193,7 +193,7 @@ public class EnhancedNLPEngine {
         if (containsPattern(lowerCommand, "security|penetration|vulnerability")) {
             testTypes.add(TestType.SECURITY_TEST);
         }
-        if (containsPattern(lowerCommand, "chaos|resilience|failure")) {
+        if (containsPattern(lowerCommand, "chaos|resilience|chaos test|resilience test")) {
             testTypes.add(TestType.CHAOS_TEST);
         }
         if (containsPattern(lowerCommand, "contract|pact|agreement")) {
@@ -432,7 +432,7 @@ public class EnhancedNLPEngine {
             testTypes.add(TestType.PERFORMANCE_TEST);
         }
         
-        if (containsPattern(lowerCommand, "chaos|failure|resilience")) {
+        if (containsPattern(lowerCommand, "chaos|resilience|chaos test|resilience test")) {
             testTypes.add(TestType.CHAOS_TEST);
         }
         
@@ -583,7 +583,7 @@ public class EnhancedNLPEngine {
         TEST_TYPE_MAPPING.put("chaos test", TestType.CHAOS_TEST);
         TEST_TYPE_MAPPING.put("chaos tests", TestType.CHAOS_TEST);
         TEST_TYPE_MAPPING.put("resilience", TestType.CHAOS_TEST);
-        TEST_TYPE_MAPPING.put("failure", TestType.CHAOS_TEST);
+        TEST_TYPE_MAPPING.put("resilience test", TestType.CHAOS_TEST);
         
         TEST_TYPE_MAPPING.put("contract", TestType.CONTRACT_TEST);
         TEST_TYPE_MAPPING.put("contract test", TestType.CONTRACT_TEST);

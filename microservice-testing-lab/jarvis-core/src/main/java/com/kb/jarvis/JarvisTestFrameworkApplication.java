@@ -16,5 +16,9 @@ public class JarvisTestFrameworkApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(JarvisTestFrameworkApplication.class, args);
+        System.out.println("Jarvis Test Framework Application started");
+        System.out.println("**************************************************");        
+        System.out.println("Hello Kanishq! I am awake, How can i help you today");
+        System.out.println("**************************************************");        
     }
 } 

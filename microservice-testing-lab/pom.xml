@@ -11,9 +11,10 @@
   <version>1.0.0</version>
   <packaging>pom</packaging>
   <modules>
-    <module>api-tests/user-service-api-tests</module>
-    <module>contract-tests/user-service-consumer</module>
-    <module>contract-tests/user-service-provider</module>
+    <module>agents/api-testing/user-service-api-tests</module>
+    <module>agents/contract-testing/user-service-consumer</module>
+    <module>agents/contract-testing/user-service-provider</module>
+    <module>jarvis-core</module>
     <!-- more test types -->
   </modules>
 </project>
