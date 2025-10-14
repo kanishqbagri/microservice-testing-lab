@@ -153,6 +153,7 @@ display_access_info() {
     echo "2. View logs: kubectl logs -n $LITMUS_NAMESPACE -l app.kubernetes.io/name=litmus"
     echo "3. Access portal: kubectl port-forward -n $LITMUS_NAMESPACE svc/litmus-frontend-service 9091:9091"
     echo "4. Run your first experiment: kubectl apply -f experiments/network/network-latency.yaml"
+    echo "5. Run pod failure experiment: kubectl apply -f experiments/service/pod-failure.yaml"
     echo
 }
 

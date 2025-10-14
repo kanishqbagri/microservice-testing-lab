@@ -1,0 +1,34 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: node-failure
+  namespace: litmus
+  labels:
+    app: node-failure
+    version: v1.0.0
+spec:
+  appinfo:
+    appns: 'microservices-product-service'
+    applabel: 'app=product-service'
+    appkind: 'deployment'
+  jobCleanUpPolicy: 'retain'
+  annotationCheck: 'false'
+  engineState: 'active'
+  chaosServiceAccount: k8s-chaos-admin
+  experiments:
+  - name: node-drain
+    spec:
+      components:
+        env:
+        - name: TOTAL_CHAOS_DURATION
+          value: '60'
+        - name: CHAOS_INTERVAL
+          value: '30'
+        - name: FORCE
+          value: 'false'
+        - name: GRACE_PERIOD
+          value: '30'
+        - name: TARGET_NODES
+          value: ''
+        - name: NODE_LABEL
+          value: 'chaos-enabled=true'

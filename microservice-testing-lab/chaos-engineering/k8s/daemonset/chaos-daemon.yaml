@@ -1,0 +1,211 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: chaos-daemon
+  namespace: litmus
+  labels:
+    app: chaos-daemon
+    version: v1.0.0
+spec:
+  selector:
+    matchLabels:
+      app: chaos-daemon
+  template:
+    metadata:
+      labels:
+        app: chaos-daemon
+        version: v1.0.0
+    spec:
+      serviceAccountName: chaos-daemon-sa
+      containers:
+      - name: chaos-runner
+        image: litmuschaos/chaos-runner:2.6.0
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: CHAOS_NAMESPACE
+          value: "litmus"
+        - name: CHAOS_ENGINE_NAMESPACE
+          value: "litmus"
+        - name: CHAOS_EXPERIMENT_NAMESPACE
+          value: "litmus"
+        - name: CHAOS_OPERATOR_NAMESPACE
+          value: "litmus"
+        - name: CHAOS_RUNNER_IMAGE
+          value: "litmuschaos/chaos-runner:2.6.0"
+        - name: CHAOS_RUNNER_SERVICE_ACCOUNT
+          value: "chaos-daemon-sa"
+        - name: CHAOS_RUNNER_LOG_LEVEL
+          value: "info"
+        - name: CHAOS_RUNNER_MODE
+          value: "daemon"
+        - name: CHAOS_RUNNER_TARGET_NAMESPACE
+          value: "microservices"
+        - name: CHAOS_RUNNER_BLAST_RADIUS
+          value: "service"
+        - name: CHAOS_RUNNER_MAX_DURATION
+          value: "300"
+        - name: CHAOS_RUNNER_SAFETY_MODE
+          value: "true"
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: metrics
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: chaos-config
+          mountPath: /etc/chaos
+          readOnly: true
+        - name: chaos-logs
+          mountPath: /var/log/chaos
+        - name: chaos-data
+          mountPath: /var/lib/chaos
+      volumes:
+      - name: chaos-config
+        configMap:
+          name: chaos-daemon-config
+      - name: chaos-logs
+        emptyDir: {}
+      - name: chaos-data
+        emptyDir: {}
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        effect: NoSchedule
+      nodeSelector:
+        chaos-enabled: "true"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: chaos-daemon-sa
+  namespace: litmus
+  labels:
+    app: chaos-daemon
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: chaos-daemon-role
+  labels:
+    app: chaos-daemon
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints", "events", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["litmuschaos.io"]
+  resources: ["chaosengines", "chaosexperiments", "chaosresults"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: chaos-daemon-role-binding
+  labels:
+    app: chaos-daemon
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: chaos-daemon-role
+subjects:
+- kind: ServiceAccount
+  name: chaos-daemon-sa
+  namespace: litmus
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chaos-daemon-config
+  namespace: litmus
+  labels:
+    app: chaos-daemon
+data:
+  chaos-config.yaml: |
+    chaos:
+      daemon:
+        enabled: true
+        mode: "daemon"
+        blast-radius: "service"
+        max-duration: 300
+        safety-mode: true
+        target-namespace: "microservices"
+        excluded-services:
+          - "kube-system"
+          - "litmus"
+          - "monitoring"
+        included-services:
+          - "user-service"
+          - "product-service"
+          - "order-service"
+          - "notification-service"
+          - "gateway-service"
+      experiments:
+        network:
+          enabled: true
+          max-latency: 1000
+          max-packet-loss: 50
+          max-bandwidth-limit: 1000000
+        service:
+          enabled: true
+          max-pod-failures: 1
+          max-service-restarts: 2
+          max-resource-exhaustion: 80
+        infrastructure:
+          enabled: true
+          max-node-failures: 0
+          max-resource-scaling: 200
+        data:
+          enabled: false
+          max-data-corruption: 0
+          max-data-loss: 0
+      monitoring:
+        enabled: true
+        metrics-endpoint: "http://prometheus:9090"
+        alerting:
+          enabled: true
+          webhook-url: ""
+          slack-webhook: ""
+        dashboard:
+          enabled: true
+          port: 9090
+      safety:
+        enabled: true
+        emergency-stop:
+          enabled: true
+          grace-period: 30
+        rollback:
+          enabled: true
+          auto-rollback: true
+          rollback-threshold: 0.8
+        limits:
+          max-concurrent-experiments: 2
+          max-experiments-per-hour: 10
+          max-experiments-per-day: 50

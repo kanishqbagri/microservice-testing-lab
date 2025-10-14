@@ -1,0 +1,36 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: database-connection
+  namespace: litmus
+  labels:
+    app: database-connection
+    version: v1.0.0
+spec:
+  appinfo:
+    appns: 'microservices-order-service'
+    applabel: 'app=order-service'
+    appkind: 'deployment'
+  jobCleanUpPolicy: 'retain'
+  annotationCheck: 'false'
+  engineState: 'active'
+  chaosServiceAccount: k8s-chaos-admin
+  experiments:
+  - name: pod-dns-error
+    spec:
+      components:
+        env:
+        - name: TOTAL_CHAOS_DURATION
+          value: '30'
+        - name: CHAOS_INTERVAL
+          value: '10'
+        - name: FORCE
+          value: 'false'
+        - name: TARGET_PODS
+          value: ''
+        - name: DNS_ERRORS
+          value: 'database-service'
+        - name: CONTAINER_RUNTIME
+          value: 'docker'
+        - name: SOCKET_PATH
+          value: '/var/run/docker.sock'

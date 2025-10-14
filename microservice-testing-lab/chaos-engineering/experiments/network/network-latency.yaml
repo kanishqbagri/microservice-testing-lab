@@ -1,0 +1,40 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: network-latency
+  namespace: litmus
+  labels:
+    app: network-latency
+    version: v1.0.0
+spec:
+  appinfo:
+    appns: 'microservices-user-service'
+    applabel: 'app=user-service'
+    appkind: 'deployment'
+  jobCleanUpPolicy: 'retain'
+  annotationCheck: 'false'
+  engineState: 'active'
+  chaosServiceAccount: k8s-chaos-admin
+  experiments:
+  - name: network-chaos
+    spec:
+      components:
+        env:
+        - name: TOTAL_CHAOS_DURATION
+          value: '30'
+        - name: NETWORK_INTERFACE
+          value: 'eth0'
+        - name: NETWORK_PACKET_LOSS_PERCENTAGE
+          value: '0'
+        - name: NETWORK_LATENCY
+          value: '100'
+        - name: NETWORK_JITTER
+          value: '10'
+        - name: NETWORK_CORRELATION
+          value: '100'
+        - name: TARGET_CONTAINER
+          value: 'user-service'
+        - name: CONTAINER_RUNTIME
+          value: 'docker'
+        - name: SOCKET_PATH
+          value: '/var/run/docker.sock'
