@@ -2,6 +2,7 @@ package com.kb.jarvis.core.service;
 
 import com.kb.jarvis.core.model.*;
 import com.kb.jarvis.core.ai.PRAnalysisAI;
+import com.kb.jarvis.core.ai.LLMPRAnalyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class PRAnalysisService {
     
     @Autowired
     private PRAnalysisAI prAnalysisAI;
+    
+    @Autowired
+    private LLMPRAnalyzer llmAnalyzer;
     
     // Service patterns for identifying affected services
     private static final Map<String, String> SERVICE_PATTERNS = Map.of(
@@ -64,12 +68,40 @@ public class PRAnalysisService {
         // Generate test recommendations
         List<TestRecommendation> testRecommendations = generateTestRecommendations(parsedPR, impactAnalysis, riskAssessment);
         
-        // Perform AI analysis for enhanced insights
-        PRAnalysisAI.AIInsights aiInsights = prAnalysisAI.analyzeWithAI(parsedPR, parsedPR.getFileChanges());
+        // Perform LLM-powered analysis for enhanced insights
+        LLMAnalysisResult llmAnalysis = llmAnalyzer.analyzeWithLLM(parsedPR, parsedPR.getFileChanges());
         
-        // Calculate confidence score (enhanced with AI)
+        // Use LLM analysis results if available, otherwise fall back to traditional analysis
+        if (llmAnalysis.getConfidence() > 0.7) {
+            log.info("Using LLM analysis results (confidence: {})", llmAnalysis.getConfidence());
+            impactAnalysis = llmAnalysis.getImpactAnalysis();
+            riskAssessment = llmAnalysis.getRiskAssessment();
+            testRecommendations = llmAnalysis.getTestRecommendations();
+        } else {
+            log.info("LLM analysis confidence low ({}), using traditional analysis", llmAnalysis.getConfidence());
+            // Perform traditional AI analysis for enhanced insights
+            PRAnalysisAI.AIInsights aiInsights = prAnalysisAI.analyzeWithAI(parsedPR, parsedPR.getFileChanges());
+            
+            // Merge LLM insights with traditional analysis
+            List<String> combinedInsights = new ArrayList<>();
+            if (llmAnalysis.getInsights() != null) {
+                combinedInsights.addAll(llmAnalysis.getInsights());
+            }
+            if (aiInsights.getInsights() != null) {
+                combinedInsights.addAll(aiInsights.getInsights());
+            }
+            
+            // Add LLM warnings
+            if (llmAnalysis.getWarnings() != null) {
+                combinedInsights.addAll(llmAnalysis.getWarnings().stream()
+                    .map(warning -> "⚠️ " + warning)
+                    .collect(Collectors.toList()));
+            }
+        }
+        
+        // Calculate confidence score (enhanced with LLM)
         double confidenceScore = Math.max(calculateConfidenceScore(parsedPR, impactAnalysis, riskAssessment), 
-                                         aiInsights.getAiConfidence());
+                                         llmAnalysis.getConfidence());
         
         // Build comprehensive analysis
         PRAnalysis analysis = PRAnalysis.builder()

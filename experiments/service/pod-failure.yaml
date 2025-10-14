@@ -8,13 +8,13 @@ metadata:
     version: v1.0.0
 spec:
   appinfo:
-    appns: 'microservices'
+    appns: 'microservices-product-service'
     applabel: 'app=product-service'
     appkind: 'deployment'
   jobCleanUpPolicy: 'retain'
   annotationCheck: 'false'
   engineState: 'active'
-  chaosServiceAccount: litmus-admin
+  chaosServiceAccount: k8s-chaos-admin
   experiments:
   - name: pod-delete
     spec:
@@ -29,4 +29,4 @@ spec:
         - name: GRACE_PERIOD
           value: '-1'
         - name: TARGET_PODS
-          value: '1'
+          value: ''

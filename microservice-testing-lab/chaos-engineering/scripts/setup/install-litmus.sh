@@ -83,7 +83,7 @@ install_with_helm() {
     helm repo update
     
     # Install Litmus Chaos
-    helm install $LITMUS_CHART_NAME litmuschaos/litmus-2-0-0 \
+    helm install $LITMUS_CHART_NAME litmuschaos/litmus \
         --namespace $LITMUS_NAMESPACE \
         --set litmusCRDs.enabled=true \
         --set litmusOperator.enabled=true \
@@ -117,7 +117,7 @@ verify_installation() {
     
     # Wait for pods to be ready
     log_info "Waiting for pods to be ready..."
-    kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=litmus-2-0-0 --namespace $LITMUS_NAMESPACE --timeout=300s
+    kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=litmus --namespace $LITMUS_NAMESPACE --timeout=300s
     
     # Check if all pods are running
     local pod_count=$(kubectl get pods -n $LITMUS_NAMESPACE --no-headers | wc -l)
@@ -150,8 +150,8 @@ display_access_info() {
     echo
     echo "=== Next Steps ==="
     echo "1. Check pod status: kubectl get pods -n $LITMUS_NAMESPACE"
-    echo "2. View logs: kubectl logs -n $LITMUS_NAMESPACE -l app.kubernetes.io/name=litmus-2-0-0"
-    echo "3. Access portal: kubectl port-forward -n $LITMUS_NAMESPACE svc/litmus-2-0-0-frontend-service 9091:9091"
+    echo "2. View logs: kubectl logs -n $LITMUS_NAMESPACE -l app.kubernetes.io/name=litmus"
+    echo "3. Access portal: kubectl port-forward -n $LITMUS_NAMESPACE svc/litmus-frontend-service 9091:9091"
     echo "4. Run your first experiment: kubectl apply -f experiments/network/network-latency.yaml"
     echo
 }

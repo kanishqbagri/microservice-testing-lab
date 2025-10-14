@@ -32,13 +32,13 @@ spring:
   # AI Configuration
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY:your-openai-api-key-here}
+      api-key: ${OPENAI_API_KEY:demo-key}
       base-url: https://api.openai.com/v1
       chat:
         options:
           model: gpt-3.5-turbo
-          temperature: 0.7
-          max-tokens: 1000
+          temperature: 0.3
+          max-tokens: 4000
 
 # Jarvis AI Configuration
 jarvis:
@@ -56,6 +56,11 @@ jarvis:
     enable-pattern-recognition: true
     enable-risk-assessment: true
     enable-performance-prediction: true
+    enabled: true
+    openai:
+      api-key: ${OPENAI_API_KEY:demo-key}
+      model: gpt-3.5-turbo
+      base-url: https://api.openai.com
   
   # Decision Engine Configuration
   decision:
