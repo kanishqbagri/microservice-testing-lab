@@ -12,8 +12,6 @@ chaos-engineering/
 ├── docs/                              # Documentation
 │   ├── CHAOS_FRAMEWORK_EXECUTION_FLOW.md
 │   ├── CHAOS_FRAMEWORK_FLOW_DIAGRAM.md
-│   ├── CHAOS_FRAMEWORK_TROUBLESHOOTING_SUMMARY.md
-│   ├── REPOSITORY_RESTRUCTURING_PLAN.md
 │   └── installation.md
 ├── experiments/                       # Chaos experiment definitions
 │   ├── network/                      # Network chaos experiments
